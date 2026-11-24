@@ -26,6 +26,7 @@ class ComCommand(BaseModel):
     index: int
     name: str  # e.g. "$$add_research"
     raw_name: str  # e.g. "add_research"
+    category: str = "general"  # e.g. "research", "crm", "mythology"
     args: str  # e.g. "[text]" or "-"
     description: str
 

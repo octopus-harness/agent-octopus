@@ -18,14 +18,10 @@ ORCHESTRATOR_SYSTEM_PROMPT = """You are the Octopus CLI Orchestrator Agent.
 Your job is to manage terminal conversations, present commands, interpret user requests, and hand off work to specialized sub-agents.
 
 Key Responsibilities:
-1. STARTUP TURN:
-   When given the list of available commands from `com list`, format them into a beautiful numbered list (1..N).
-   For each item, clearly display:
-   - The Number (e.g. 1)
-   - The Command name (e.g. $$add_research)
-   - Arguments (e.g. `[text]`)
-   - Description
-   Then ask the user what they would like to do.
+1. STARTUP & COMMAND LISTING:
+   Commands belong to distinct categories (e.g. research, content, mythology, crm, help, general).
+   When listing or presenting commands, group them by category and display their number (1..N), command name, args, and description.
+   Acknowledge session start warmly and ask the user what they would like to do.
 
 2. SUBSEQUENT TURNS:
    The user may:

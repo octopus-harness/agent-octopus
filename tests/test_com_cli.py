@@ -12,6 +12,20 @@ def test_run_com_list():
     assert cmds[0].index == 1
     assert cmds[1].index == 2
 
+    # Check category parsing
+    research_cmd = next(c for c in cmds if c.name == "$$add_research")
+    assert research_cmd.category == "research"
+    assert research_cmd.args == "`[text]`"
+    assert "Research Project" in research_cmd.description
+
+    mythology_cmd = next(c for c in cmds if c.name == "$$god_find")
+    assert mythology_cmd.category == "mythology"
+    assert mythology_cmd.args == "`<name>`"
+
+    crm_cmd = next(c for c in cmds if c.name == "$$leads_get")
+    assert crm_cmd.category == "crm"
+    assert crm_cmd.args == "-"
+
 
 def test_run_com_get():
     content = run_com_get("add_research")
