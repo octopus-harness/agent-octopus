@@ -1,0 +1,29 @@
+[project]
+name = "agent-octopus"
+version = "0.1.0"
+description = "Multi-agent CLI harness with Pydantic AI and MCP delegation"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pydantic>=2.10.0",
+    "pydantic-ai>=0.0.49",
+    "pydantic-settings>=2.7.0",
+    "rich>=13.9.0",
+    "prompt-toolkit>=3.0.48",
+    "python-dotenv>=1.0.1",
+    "mcp>=1.3.0",
+]
+
+[project.scripts]
+agent-octopus = "agent_octopus.cli:main"
+octo = "agent_octopus.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.0",
+    "pytest-asyncio>=0.25.0",
+]
