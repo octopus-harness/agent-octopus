@@ -14,24 +14,17 @@ from prompt_toolkit.styles import Style
 
 from agent_octopus.config import load_settings, get_model
 from agent_octopus.models import SessionContext, ComCommand
-from agent_octopus.com_cli import run_com_list
+from agent_octopus.com_cli import run_com_list, category_sort_key
 from agent_octopus.orchestrator import create_orchestrator_agent
 from agent_octopus.observability import setup_observability
 
 
-CATEGORY_COLORS: dict[str, str] = {
-    "research": "cyan",
-    "content": "green",
-    "mythology": "magenta",
-    "crm": "blue",
-    "help": "yellow",
-    "general": "white",
-}
+CATEGORY_HEADER_STYLE: str = "bold magenta"
 
 
 def render_grouped_commands_table(commands: list[ComCommand]) -> Table:
     """
-    Renders a unified Rich Table grouping commands by category with distinct
+    Renders a unified Rich Table grouping commands by category with uniform
     colored category section header rows, aligned columns, and sequential numbering.
     """
     table = Table(
@@ -46,21 +39,24 @@ def render_grouped_commands_table(commands: list[ComCommand]) -> Table:
     table.add_column("Args", style="green", width=14)
     table.add_column("Description", style="white")
 
-    # Group commands by category preserving order of first appearance
+    # Group commands by category
     categories: dict[str, list[ComCommand]] = {}
     for cmd in commands:
         categories.setdefault(cmd.category, []).append(cmd)
 
+    # Ensure 'General' category is always at the top and 'Help' is always at the bottom
+    sorted_cat_names = sorted(categories.keys(), key=category_sort_key)
+
     first = True
-    for cat, cat_cmds in categories.items():
-        color = CATEGORY_COLORS.get(cat.lower(), "cyan")
+    for cat in sorted_cat_names:
+        cat_cmds = categories[cat]
         if not first:
             table.add_section()
         first = False
         table.add_row(
             "",
-            f"[bold {color}]📁 {cat.upper()}[/bold {color}]",
-            f"[dim {color}]({len(cat_cmds)} cmd{'s' if len(cat_cmds) > 1 else ''})[/dim {color}]",
+            f"[{CATEGORY_HEADER_STYLE}]{cat.upper()}[/{CATEGORY_HEADER_STYLE}]",
+            "",
             "",
         )
         for cmd in cat_cmds:

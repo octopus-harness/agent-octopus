@@ -65,6 +65,28 @@ def test_render_grouped_commands_table():
     assert "Description" in col_names
 
 
+def test_category_ordering_general_first_help_last():
+    # Pass commands in arbitrary category order including general and help
+    unordered_cmds = [
+        ComCommand(index=1, name="$$help", raw_name="help", category="help", args="-", description="Help"),
+        ComCommand(index=2, name="$$add_research", raw_name="add_research", category="research", args="-", description="Note"),
+        ComCommand(index=3, name="$$readable_summary", raw_name="readable_summary", category="general", args="-", description="Summary"),
+        ComCommand(index=4, name="$$leads_get", raw_name="leads_get", category="crm", args="-", description="Leads"),
+    ]
+    table = render_grouped_commands_table(unordered_cmds)
+
+    # Extract all category header row cells in order of rendering
+    category_headers = [str(cell) for cell in table.columns[1]._cells if not str(cell).startswith("$$")]
+
+    assert len(category_headers) == 4
+    assert "GENERAL" in category_headers[0]
+    assert "HELP" in category_headers[-1]
+    # Verify icon was removed and uniform bold magenta color is applied
+    for header in category_headers:
+        assert "📁" not in header
+        assert "bold magenta" in header
+
+
 def test_octo_command_completer_prefix_dollar():
     cmds = sample_commands()
     completer = OctoCommandCompleter(cmds)

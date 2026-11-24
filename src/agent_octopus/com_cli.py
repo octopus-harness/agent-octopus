@@ -3,6 +3,43 @@ import re
 from agent_octopus.models import ComCommand
 
 
+def category_sort_key(cat: str) -> tuple[int, str]:
+    """
+    Returns a sort key ensuring 'General' is always first (rank 0),
+    'Help' is always last (rank 2), and other categories are in between (rank 1).
+    """
+    c = cat.lower()
+    if c == "general":
+        return (0, c)
+    if c == "help":
+        return (2, c)
+    return (1, c)
+
+
+def sort_commands_by_category(commands: list[ComCommand]) -> list[ComCommand]:
+    """
+    Sorts commands so that 'General' is always at the top and 'Help' is always at the bottom,
+    with other categories in between, and re-indexes them sequentially (1..N).
+    """
+    sorted_cmds = sorted(
+        commands,
+        key=lambda c: (category_sort_key(c.category), c.raw_name),
+    )
+    reindexed: list[ComCommand] = []
+    for i, c in enumerate(sorted_cmds, start=1):
+        reindexed.append(
+            ComCommand(
+                index=i,
+                name=c.name,
+                raw_name=c.raw_name,
+                category=c.category,
+                args=c.args,
+                description=c.description,
+            )
+        )
+    return reindexed
+
+
 def run_com_list(com_bin: str = "com") -> tuple[str, list[ComCommand]]:
     """
     Executes `com list` and parses the output into a list of ComCommand objects.
@@ -106,6 +143,7 @@ def run_com_list(com_bin: str = "com") -> tuple[str, list[ComCommand]]:
             )
             idx += 1
 
+    commands = sort_commands_by_category(commands)
     return raw_output, commands
 
 

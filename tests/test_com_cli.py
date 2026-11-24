@@ -26,6 +26,10 @@ def test_run_com_list():
     assert crm_cmd.category == "crm"
     assert crm_cmd.args == "-"
 
+    # General must be first, Help must be last
+    assert cmds[0].category == "general"
+    assert cmds[-1].category == "help"
+
 
 def test_run_com_get():
     content = run_com_get("add_research")
