@@ -4,14 +4,101 @@ import argparse
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.panel import Panel
+from rich.table import Table
+from rich.markup import escape
 from prompt_toolkit import PromptSession
+from prompt_toolkit.completion import Completer, Completion
+from prompt_toolkit.document import Document
 from prompt_toolkit.history import InMemoryHistory
+from prompt_toolkit.styles import Style
 
 from agent_octopus.config import load_settings, get_model
-from agent_octopus.models import SessionContext
-from agent_octopus.com_cli import run_com_list
+from agent_octopus.models import SessionContext, ComCommand
+from agent_octopus.com_cli import run_com_list, category_sort_key
 from agent_octopus.orchestrator import create_orchestrator_agent
 from agent_octopus.observability import setup_observability
+
+
+CATEGORY_HEADER_STYLE: str = "bold magenta"
+
+
+def render_grouped_commands_table(commands: list[ComCommand]) -> Table:
+    """
+    Renders a unified Rich Table grouping commands by category with uniform
+    colored category section header rows, aligned columns, and sequential numbering.
+    """
+    table = Table(
+        title="🐙 Octopus CLI - Available Commands",
+        title_style="bold magenta",
+        header_style="bold cyan",
+        border_style="dim",
+        expand=True,
+    )
+    table.add_column("#", style="dim cyan", width=4, justify="right")
+    table.add_column("Command Name", style="bold cyan", width=22)
+    table.add_column("Args", style="green", width=14)
+    table.add_column("Description", style="white")
+
+    # Group commands by category
+    categories: dict[str, list[ComCommand]] = {}
+    for cmd in commands:
+        categories.setdefault(cmd.category, []).append(cmd)
+
+    # Ensure 'General' category is always at the top and 'Help' is always at the bottom
+    sorted_cat_names = sorted(categories.keys(), key=category_sort_key)
+
+    first = True
+    for cat in sorted_cat_names:
+        cat_cmds = categories[cat]
+        if not first:
+            table.add_section()
+        first = False
+        table.add_row(
+            "",
+            f"[{CATEGORY_HEADER_STYLE}]{cat.upper()}[/{CATEGORY_HEADER_STYLE}]",
+            "",
+            "",
+        )
+        for cmd in cat_cmds:
+            table.add_row(
+                str(cmd.index),
+                escape(cmd.name),
+                escape(cmd.args.strip("`")),
+                escape(cmd.description),
+            )
+
+    return table
+
+
+class OctoCommandCompleter(Completer):
+    """
+    Interactive popup completer for prompt_toolkit.
+    Prefix-triggered: triggers when typing '$' or explicitly pressing Tab,
+    matching against available command names and showing category badges.
+    """
+
+    def __init__(self, commands: list[ComCommand]):
+        self.commands = commands
+
+    def get_completions(self, document: Document, complete_event):
+        word = document.get_word_before_cursor(WORD=True)
+        is_tab = complete_event.completion_requested
+        is_dollar_prefix = word.startswith("$")
+
+        if not (is_tab or is_dollar_prefix):
+            return
+
+        query = word.lower()
+        for cmd in self.commands:
+            if not query or query in cmd.name.lower() or query in cmd.raw_name.lower():
+                display_meta = f"[{cmd.category}] {cmd.args} — {cmd.description}"
+                start_pos = -len(word) if word else 0
+                yield Completion(
+                    text=f"{cmd.name} ",
+                    start_position=start_pos,
+                    display=cmd.name,
+                    display_meta=display_meta,
+                )
 
 
 async def async_main():
@@ -53,6 +140,11 @@ async def async_main():
         console.print(f"[bold red]Error running com list:[/bold red] {e}")
         sys.exit(1)
 
+    # Display grouped commands table directly
+    console.print()
+    console.print(render_grouped_commands_table(parsed_cmds))
+    console.print()
+
     session = SessionContext(
         settings=settings,
         console=console,
@@ -64,10 +156,9 @@ async def async_main():
 
     # Prepare startup turn prompt
     startup_prompt = (
-        f"The CLI just started. Here is the raw output from `com list`:\n\n"
+        f"The CLI just started. The available commands grouped by category have already been rendered in a table for the user:\n\n"
         f"```text\n{raw_list}\n```\n\n"
-        f"Please format this into a clean, numbered list (1..{len(parsed_cmds)}) showing the command name, "
-        f"args, and description, and ask the user what they would like to do."
+        f"Briefly acknowledge the session start (in 1-2 friendly sentences) and ask the user what they would like to do."
     )
 
     message_history = []
@@ -98,7 +189,19 @@ async def async_main():
         return
 
     # 2. Interactive REPL Loop
-    prompt_session = PromptSession(history=InMemoryHistory())
+    completer = OctoCommandCompleter(session.commands)
+    prompt_style = Style.from_dict({
+        "completion-menu.completion": "bg:#262626 #e0e0e0",
+        "completion-menu.completion.current": "bg:#005f87 #ffffff bold",
+        "completion-menu.meta.completion": "bg:#1a1a1a #9e9e9e italic",
+        "completion-menu.meta.completion.current": "bg:#004060 #5fd7ff bold",
+    })
+    prompt_session = PromptSession(
+        history=InMemoryHistory(),
+        completer=completer,
+        complete_while_typing=True,
+        style=prompt_style,
+    )
 
     while True:
         try:
