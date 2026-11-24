@@ -4,7 +4,7 @@ import argparse
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.panel import Panel
-from prompt_toolkit import prompt
+from prompt_toolkit import PromptSession
 from prompt_toolkit.history import InMemoryHistory
 
 from agent_octopus.config import load_settings, get_model
@@ -90,11 +90,11 @@ async def async_main():
         return
 
     # 2. Interactive REPL Loop
-    input_history = InMemoryHistory()
+    prompt_session = PromptSession(history=InMemoryHistory())
 
     while True:
         try:
-            user_input = prompt("🐙 octo > ", history=input_history).strip()
+            user_input = (await prompt_session.prompt_async("🐙 octo > ")).strip()
         except (KeyboardInterrupt, EOFError):
             console.print("\n[dim]Exiting Agent Octopus. Goodbye![/dim]")
             break

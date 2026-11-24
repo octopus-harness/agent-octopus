@@ -1,4 +1,4 @@
-from prompt_toolkit import prompt
+from prompt_toolkit import PromptSession
 from rich.panel import Panel
 from rich.table import Table
 
@@ -6,16 +6,17 @@ from agent_octopus.models import SessionContext
 from agent_octopus.com_cli import run_com_list, run_com_get
 
 
-def ask_user_interactive(
+async def ask_user_interactive(
     ctx_session: SessionContext,
     question_text: str,
     options: list[str] | None = None,
 ) -> str:
     """
     Renders an interactive terminal prompt to ask the user a question
-    and returns their input.
+    and returns their input asynchronously.
     """
     console = ctx_session.console
+    prompt_session: PromptSession = PromptSession()
 
     if options:
         table = Table(title="Please select an option", show_header=True, header_style="bold cyan")
@@ -27,7 +28,7 @@ def ask_user_interactive(
         console.print(Panel(question_text, title="Agent Question", border_style="bold magenta"))
         console.print(table)
 
-        user_input = prompt("Your choice: ").strip()
+        user_input = (await prompt_session.prompt_async("Your choice: ")).strip()
         # If user picked a number, map it back to the option text if valid
         if user_input.isdigit():
             idx = int(user_input)
@@ -36,5 +37,5 @@ def ask_user_interactive(
         return user_input
     else:
         console.print(Panel(question_text, title="Agent Question", border_style="bold magenta"))
-        user_input = prompt("Your answer: ").strip()
+        user_input = (await prompt_session.prompt_async("Your answer: ")).strip()
         return user_input

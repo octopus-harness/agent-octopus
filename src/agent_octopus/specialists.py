@@ -196,7 +196,7 @@ async def execute_specialist_handoff(
             options: list[str] | None = None,
         ) -> str:
             """Ask the user an interactive question in the terminal and receive their response."""
-            return ask_user_interactive(sub_ctx.deps, question_text, options)
+            return await ask_user_interactive(sub_ctx.deps, question_text, options)
 
         prompt_text = (
             f"TASK: {request.task}\n"
