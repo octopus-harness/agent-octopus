@@ -183,6 +183,7 @@ async def execute_specialist_handoff(
         model = get_model(session.settings)
         specialist_agent = Agent(
             model=model,
+            name=spec.name,
             deps_type=SessionContext,
             toolsets=toolsets,
             system_prompt=extra_instructions,

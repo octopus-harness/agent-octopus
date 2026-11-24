@@ -11,6 +11,7 @@ from agent_octopus.config import load_settings, get_model
 from agent_octopus.models import SessionContext
 from agent_octopus.com_cli import run_com_list
 from agent_octopus.orchestrator import create_orchestrator_agent
+from agent_octopus.observability import setup_observability
 
 
 async def async_main():
@@ -19,7 +20,14 @@ async def async_main():
     parser.add_argument("--api-base", type=str, help="Override OLLAMA_API_BASE")
     parser.add_argument("--mcp-config", type=str, help="Override MCP_CONFIG_PATH")
     parser.add_argument("-c", "--once", type=str, help="Run single command and exit")
+    parser.add_argument(
+        "--logfire-console",
+        action="store_true",
+        help="Display live Logfire spans in the terminal console",
+    )
     args = parser.parse_args()
+
+    setup_observability(console=True if args.logfire_console else None)
 
     settings = load_settings()
     if args.model:

@@ -52,6 +52,7 @@ def create_orchestrator_agent(model: Any = None) -> Agent[SessionContext, str]:
 
     agent: Agent[SessionContext, str] = Agent(
         model=model,
+        name="orchestrator",
         deps_type=SessionContext,
         system_prompt=ORCHESTRATOR_SYSTEM_PROMPT,
     )
