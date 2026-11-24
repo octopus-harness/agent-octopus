@@ -36,7 +36,7 @@ Key Responsibilities:
      * $$content_prompt -> content_productivity
      * $$leads_get, $$leads_in_progress, $$leads_merge -> leads_crm
      * $$god_find -> mythology_knowledge
-     * Domain requests (science, books, macro nutrition, songbooks) -> astronomer, biologist, chemist, physicist, statesman, book_rhino, macronx, evox
+     * Domain requests (science manifolds, novel architecture, OSINT, songbooks) -> astronomer, biologist, chemist, physicist, statesman, book_rhino, macronx, evox
    - Meta commands ($$commands, $$help) can be answered directly using the `get_command_help` or `list_commands` tools.
    - When the specialist returns its result, synthesize and present it clearly to the user.
 """

@@ -94,18 +94,18 @@ Agent Octopus comes pre-configured with **12 Specialists** handling **15 distinc
 
 | Specialist Agent | Category | Default Commands | MCP Servers Glued | Primary Capabilities |
 |---|---|---|---|---|
-| **`research_notes`** | `research`, `general` | `$$add_research`, `$$readable_summary`, `$$god_save_research` | `noteking`, `memorable` | Summarizes research in the user's voice, queries memory guidelines, creates notes in NoteKing projects. |
-| **`content_productivity`** | `content` | `$$content_prompt` | `doer`, `devbook` | Manages todo backlogs in Doer, selects content ideas, retrieves prompt templates from Devbook, merges outputs. |
-| **`leads_crm`** | `crm` | `$$leads_get`, `$$leads_in_progress`, `$$leads_merge` | `ninja-crm` | Queries coaching/recruiting leads, advances lead statuses, merges leads against outreach email templates. |
-| **`mythology_knowledge`** | `mythology` | `$$god_find`, `$$god_save_research` | `syncretica`, `wikidata` | Cross-pantheon deity lookups, Wikidata SPARQL queries, mythology comparative analysis. |
-| **`astronomer`** | `science` | Domain requests | `astronomer` | Celestial coordinates, stellar catalogs, telescope planning. |
-| **`biologist`** | `science` | Domain requests | `biologist` | Taxonomy, genetics, biological pathway queries. |
-| **`chemist`** | `science` | Domain requests | `chemist` | Molecular structures, chemical properties, synthesis paths. |
-| **`physicist`** | `science` | Domain requests | `physicist` | Physical constants, quantum mechanics calculations, units conversion. |
-| **`statesman`** | `governance` | Domain requests | `statesman` | Geopolitical entities, diplomatic treaties, international relations. |
-| **`book_rhino`** | `publishing` | Domain requests | `book-rhino` | Book metadata, publication tracking, reading list management. |
-| **`macronx`** | `health` | Domain requests | `macronx` | Nutritional tracking, caloric calculations, diet macro logs. |
-| **`evox`** | `creative` | Domain requests | `evox` | Songbook charts, chord diagrams, sheet music generation. |
+| **`research_notes`** | `research`, `general` | `$$add_research`, `$$readable_summary`, `$$god_save_research` | `noteking`, `memorable` | Summarizes research in the user's voice, queries architectural guidelines and vector memories in Memorable, manages Markdown notes and projects in NoteKing. |
+| **`content_productivity`** | `content` | `$$content_prompt` | `doer`, `devbook` | Manages developer checklist backlogs in Doer, selects content ideas, retrieves prompt templates with `{{variable}}` substitution from Devbook, merges outputs. |
+| **`leads_crm`** | `crm` | `$$leads_get`, `$$leads_in_progress`, `$$leads_merge` | `ninja-crm` | Full-cycle sales execution: queries coaching/recruiting leads, advances lead statuses, drafts outreach, and merges leads against outreach templates in Ninja CRM. |
+| **`mythology_knowledge`** | `mythology` | `$$god_find`, `$$god_save_research` | `syncretica`, `wikidata` | Cross-cultural deity lookups and 1024-dim `pgvector` manifold queries in Syncretica; local Wikidata Truthy knowledge grounding and entity disambiguation via QLever. |
+| **`astronomer`** | `science` | Domain requests | `astronomer` | Computational research platform for comparative astrophysics, cosmic structures, star systems, celestial body manifolds, and pgvector clustering. |
+| **`biologist`** | `science` | Domain requests | `biologist` | Computational research platform for comparative biology, ecology, organismal taxonomy, biomes, species manifolds, and evolutionary convergence inquiries. |
+| **`chemist`** | `science` | Domain requests | `chemist` | Computational research platform for comparative chemistry, molecular structures, functional group manifolds, and synthesis report generation. |
+| **`physicist`** | `science` | Domain requests | `physicist` | Computational research platform for comparative particle physics, subatomic particles, quantum state manifolds, and quantum cluster synthesis monographs. |
+| **`statesman`** | `governance` | Domain requests | `statesman` | Computational research platform for comparative geopolitics, statecraft, urban power centers, cross-continental catalogs, and pgvector cosine distance manifolds. |
+| **`book_rhino`** | `creative` | Domain requests | `book-rhino` | AI-assisted novel architecture, worldbuilding, character taxonomies, Sidekiq asynchronous AI generation pipelines, and compiled Markdown manuscript generation. |
+| **`macronx`** | `osint` | Domain requests | `macronx` | Personal Open-Source Intelligence (OSINT) intake and analysis pipeline: raw signal ingestion, multimodal attachments (IMINT/audio), inbox triage, and Executive Intelligence Briefs (EIB). |
+| **`evox`** | `music` | Domain requests | `evox` | Structured Song AST compiler and PDF songbook generation engine with aligned chords, multi-column lyrics, and automated Table of Contents. |
 
 ---
 

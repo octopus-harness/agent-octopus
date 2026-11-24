@@ -73,51 +73,75 @@ SPECIALISTS: dict[SpecialistName, SpecialistDefinition] = {
     ),
     "astronomer": SpecialistDefinition(
         name="astronomer",
-        description="Specialist in astronomy, celestial coordinates, stars, and telescope observations.",
+        description="Specialist in comparative astrophysics, cosmic structures, star systems, celestial body manifolds, and pgvector clustering.",
         mcp_servers=["astronomer"],
-        system_prompt="You are the Astronomer Specialist Agent. You interact with the Astronomer MCP server.",
+        system_prompt=(
+            "You are the Astronomer Specialist Agent. You interact with the Astronomer computational research "
+            "platform for comparative astrophysics, stellar systems, and celestial body manifolds over pgvector."
+        ),
     ),
     "biologist": SpecialistDefinition(
         name="biologist",
-        description="Specialist in biological taxonomy, species, genetics, and life sciences.",
+        description="Specialist in comparative biology, ecology, organismal taxonomy, biomes, and species manifolds.",
         mcp_servers=["biologist"],
-        system_prompt="You are the Biologist Specialist Agent. You interact with the Biologist MCP server.",
+        system_prompt=(
+            "You are the Biologist Specialist Agent. You interact with the Biologist computational research "
+            "platform for comparative biology, ecology, and evolutionary convergence inquiries over pgvector."
+        ),
     ),
     "chemist": SpecialistDefinition(
         name="chemist",
-        description="Specialist in chemical compounds, molecular properties, and reactions.",
+        description="Specialist in comparative chemistry, molecular structures, functional group manifolds, and synthesis reports.",
         mcp_servers=["chemist"],
-        system_prompt="You are the Chemist Specialist Agent. You interact with the Chemist MCP server.",
+        system_prompt=(
+            "You are the Chemist Specialist Agent. You interact with the Chemist computational research "
+            "platform for comparative chemistry, molecular structures, and functional group manifolds."
+        ),
     ),
     "physicist": SpecialistDefinition(
         name="physicist",
-        description="Specialist in physical constants, mechanics, quantum theory, and calculations.",
+        description="Specialist in comparative particle physics, subatomic particles, and quantum state manifolds.",
         mcp_servers=["physicist"],
-        system_prompt="You are the Physicist Specialist Agent. You interact with the Physicist MCP server.",
+        system_prompt=(
+            "You are the Physicist Specialist Agent. You interact with the Physicist computational research "
+            "platform for comparative particle physics, quantum state manifolds, and quantum cluster synthesis."
+        ),
     ),
     "statesman": SpecialistDefinition(
         name="statesman",
-        description="Specialist in geopolitics, international relations, and governance data.",
+        description="Specialist in comparative geopolitics, statecraft, urban power centers, and cross-continental manifolds.",
         mcp_servers=["statesman"],
-        system_prompt="You are the Statesman Specialist Agent. You interact with the Statesman MCP server.",
+        system_prompt=(
+            "You are the Statesman Specialist Agent. You interact with the Statesman computational research "
+            "platform for comparative geopolitics, statecraft, and urban power centers over pgvector."
+        ),
     ),
     "book_rhino": SpecialistDefinition(
         name="book_rhino",
-        description="Specialist in books, publishing catalog, reading lists, and literary metadata.",
+        description="Specialist in AI-assisted novel architecture, worldbuilding, character taxonomies, Sidekiq AI pipelines, and manuscript compilation.",
         mcp_servers=["book-rhino"],
-        system_prompt="You are the Book Rhino Specialist Agent. You interact with the Book Rhino MCP server.",
+        system_prompt=(
+            "You are the Book Rhino Specialist Agent. You interact with Book Rhino to architect novels, build worlds "
+            "and characters, manage creative taxonomies, run Sidekiq generation jobs, and export compiled manuscripts."
+        ),
     ),
     "macronx": SpecialistDefinition(
         name="macronx",
-        description="Specialist in nutrition logs, macronutrient tracking, and dietary analytics.",
+        description="Specialist in Open-Source Intelligence (OSINT) signal ingestion, multimodal attachments, inbox triage, and Executive Intelligence Briefs (EIB).",
         mcp_servers=["macronx"],
-        system_prompt="You are the Macronx Specialist Agent. You interact with the Macronx MCP server.",
+        system_prompt=(
+            "You are the MacronX Specialist Agent. You interact with the MacronX OSINT pipeline to ingest raw signals, "
+            "triage intelligence inboxes, inspect multimodal media attachments, and synthesize Executive Intelligence Briefs (EIB)."
+        ),
     ),
     "evox": SpecialistDefinition(
         name="evox",
-        description="Specialist in songbook management, chord charts, and publishable songbook projects.",
+        description="Specialist in structured Song AST authoring and PDF songbook compilation with aligned chords and Table of Contents.",
         mcp_servers=["evox"],
-        system_prompt="You are the Evox Specialist Agent. You interact with the Evox MCP server.",
+        system_prompt=(
+            "You are the Evox Specialist Agent. You interact with Evox to author Song ASTs and compile "
+            "publication-quality PDF songbooks with multi-column lyrics, aligned chords, and automatic Table of Contents."
+        ),
     ),
 }
 
