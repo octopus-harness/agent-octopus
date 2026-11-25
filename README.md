@@ -171,9 +171,11 @@ Add your server's transport definition in `mcp_config.json`:
    ]
    ```
 
-2. **Register the specialist** in `src/agent_octopus/specialists.py`:
+2. **Create the specialist module** in `src/agent_octopus/specialists/<name>.py`:
    ```python
-   SPECIALISTS["dev_triage"] = SpecialistDefinition(
+   from agent_octopus.specialists.base import SpecialistDefinition
+
+   SPECIALIST = SpecialistDefinition(
        name="dev_triage",
        description="Specialist in repository triage and issue drafting.",
        mcp_servers=["github", "memorable"],
@@ -182,6 +184,12 @@ Add your server's transport definition in `mcp_config.json`:
            "Use the `question` tool when selecting issues or requesting clarification."
        ),
    )
+   ```
+
+3. **Register the specialist** in `src/agent_octopus/specialists/__init__.py`:
+   ```python
+   from .dev_triage import SPECIALIST as dev_triage_specialist
+   # Add to SPECIALISTS dict
    ```
 
 3. **Update orchestrator routing** in `src/agent_octopus/orchestrator.py`:
