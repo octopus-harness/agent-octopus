@@ -27,7 +27,7 @@ class SpecialistDefinition:
 SPECIALISTS: dict[SpecialistName, SpecialistDefinition] = {
     "research_notes": SpecialistDefinition(
         name="research_notes",
-        description="Specialist in saving research notes, creating readable summaries in the user's voice, and managing NoteKing/Memorable content.",
+        description="Specialist in saving research notes and managing NoteKing/Memorable content.",
         mcp_servers=["noteking", "memorable"],
         system_prompt=(
             "You are the Research & Notes Specialist Agent. You manage notes in NoteKing and retrieve "
@@ -35,6 +35,17 @@ SPECIALISTS: dict[SpecialistName, SpecialistDefinition] = {
             "When executing a com command runbook, follow its step-by-step instructions strictly.\n"
             "If you need user input (e.g. asking for text to summarize or clarifying a deity/note topic), "
             "use the `question` tool to ask the user directly."
+        ),
+    ),
+    "readability": SpecialistDefinition(
+        name="readability",
+        description="Specialist in rewriting text into clear, readable prose or concise summaries in the user's voice using Memorable writing rules and NoteKing context.",
+        mcp_servers=["memorable", "noteking"],
+        system_prompt=(
+            "You are the Readability & Voice Specialist Agent. You retrieve writing rulesets from Memorable "
+            "and reference notes in NoteKing to rewrite and polish text into clear, readable prose matching the user's voice.\n"
+            "When executing command runbooks like $$readable_text or $$readable_summary, follow instructions strictly.\n"
+            "Keep the original meaning, facts, and structure intact while eliminating jargon, fluff, and robotic phrasing."
         ),
     ),
     "content_productivity": SpecialistDefinition(
@@ -146,6 +157,44 @@ SPECIALISTS: dict[SpecialistName, SpecialistDefinition] = {
 }
 
 
+READABILITY_ENHANCED_SPECIALISTS: set[SpecialistName] = {
+    "mythology_knowledge",
+}
+
+
+async def apply_readability_pass(
+    ctx: RunContext[SessionContext],
+    raw_text: str,
+    command_name: str = "readable_text",
+) -> str:
+    """
+    Passes raw specialist output text through the readability specialist using the specified command runbook (default $$readable_text).
+    Falls back gracefully to raw_text on error.
+    """
+    if not raw_text or not raw_text.strip() or raw_text.startswith("Error:"):
+        return raw_text
+
+    try:
+        ctx.deps.console.print(
+            f"[dim]Polishing output via readability specialist ($${command_name})...[/dim]"
+        )
+        rewrite_req = HandoffRequest(
+            specialist="readability",
+            command_name=command_name,
+            task=f"Pass the following text through the $${command_name} command runbook and return the rewritten readable prose:\n\n{raw_text}",
+            context_summary=f"Rewriting specialist output for readability in user voice: {raw_text[:200]}",
+        )
+        rewrite_res = await execute_specialist_handoff(ctx, rewrite_req)
+        if rewrite_res.output and not rewrite_res.output.startswith("Error:"):
+            return rewrite_res.output
+    except Exception as e:
+        ctx.deps.console.print(
+            f"[yellow]Warning: Readability pass failed: {e}. Preserving raw output.[/yellow]"
+        )
+
+    return raw_text
+
+
 async def execute_specialist_handoff(
     ctx: RunContext[SessionContext],
     request: HandoffRequest,
@@ -240,6 +289,11 @@ async def execute_specialist_handoff(
         session.specialist_histories[request.specialist] = result.all_messages()
 
         output_str = str(result.output)
+
+        # Apply automated readability post-processing if specialist is registered
+        if request.specialist in READABILITY_ENHANCED_SPECIALISTS:
+            output_str = await apply_readability_pass(ctx, output_str, command_name="readable_text")
+
         summary = f"Completed task via {request.specialist}: {request.task[:60]}"
 
         handoff_res = HandoffResult(
