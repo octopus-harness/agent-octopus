@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     )
 
     ollama_api_base: str = Field(
-        default="http://100.95.26.48:1919/v1",
+        default="http://localhost:11434/v1",
         alias="OLLAMA_API_BASE",
     )
     ollama_model: str = Field(
