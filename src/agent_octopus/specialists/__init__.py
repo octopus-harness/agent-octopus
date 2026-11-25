@@ -1,7 +1,6 @@
 from agent_octopus.models import SpecialistName
 from .base import (
     SpecialistDefinition,
-    READABILITY_ENHANCED_SPECIALISTS,
     apply_readability_pass,
     execute_specialist_handoff,
     load_mcp_config,
@@ -34,6 +33,10 @@ SPECIALISTS: dict[SpecialistName, SpecialistDefinition] = {
     "book_rhino": book_rhino_specialist,
     "macronx": macronx_specialist,
     "evox": evox_specialist,
+}
+
+READABILITY_ENHANCED_SPECIALISTS: set[SpecialistName] = {
+    name for name, spec in SPECIALISTS.items() if spec.apply_readability_pass
 }
 
 __all__ = [

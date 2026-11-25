@@ -22,8 +22,12 @@ def test_readability_specialist_definition():
 
 
 def test_readability_enhanced_registry():
+    assert SPECIALISTS["mythology_knowledge"].apply_readability_pass is True
+    assert SPECIALISTS["readability"].apply_readability_pass is False
+    assert SPECIALISTS["astronomer"].apply_readability_pass is False
     assert "mythology_knowledge" in READABILITY_ENHANCED_SPECIALISTS
     assert "readability" not in READABILITY_ENHANCED_SPECIALISTS
+    assert "astronomer" not in READABILITY_ENHANCED_SPECIALISTS
 
 
 @pytest.mark.asyncio

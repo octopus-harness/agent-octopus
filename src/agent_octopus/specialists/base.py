@@ -23,11 +23,7 @@ class SpecialistDefinition:
     description: str
     mcp_servers: list[str]
     system_prompt: str
-
-
-READABILITY_ENHANCED_SPECIALISTS: set[SpecialistName] = {
-    "mythology_knowledge",
-}
+    apply_readability_pass: bool = False
 
 
 def _get_specialists_module():
@@ -168,9 +164,8 @@ async def execute_specialist_handoff(
 
         output_str = str(result.output)
 
-        # Apply automated readability post-processing if specialist is registered
-        enhanced_registry = getattr(pkg, "READABILITY_ENHANCED_SPECIALISTS", READABILITY_ENHANCED_SPECIALISTS)
-        if request.specialist in enhanced_registry:
+        # Apply automated readability post-processing if enabled on specialist definition
+        if spec.apply_readability_pass:
             readability_fn = getattr(pkg, "apply_readability_pass", apply_readability_pass)
             output_str = await readability_fn(ctx, output_str, command_name="readable_text")
 
