@@ -37,3 +37,15 @@ def test_specialists_mapping():
         assert spec.name == spec_name
         for server in spec.mcp_servers:
             assert server in mcp_defs, f"Specialist {spec_name} requires missing MCP server {server}"
+
+
+def test_mythology_knowledge_planning_prompt():
+    mythology_spec = SPECIALISTS["mythology_knowledge"]
+    assert "Recommended Syncretica Plan" in mythology_spec.system_prompt
+    assert "find_counterparts" in mythology_spec.system_prompt
+    assert "compute_clusters" in mythology_spec.system_prompt
+    assert "create_cluster_snapshot" in mythology_spec.system_prompt
+    assert "generate_deep_synthesis" in mythology_spec.system_prompt
+    assert "$$god_save_research" in mythology_spec.system_prompt
+    assert mythology_spec.apply_readability_pass is True
+
