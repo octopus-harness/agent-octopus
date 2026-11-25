@@ -11,6 +11,7 @@ SpecialistName = Literal[
     "content_productivity",
     "leads_crm",
     "mythology_knowledge",
+    "readability",
     "astronomer",
     "biologist",
     "chemist",

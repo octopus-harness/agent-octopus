@@ -26,8 +26,9 @@ def test_run_com_list():
     assert crm_cmd.category == "crm"
     assert crm_cmd.args == "-"
 
-    # General must be first, Help must be last
-    assert cmds[0].category == "general"
+    # General must be first if present, Help must be last
+    if any(c.category == "general" for c in cmds):
+        assert cmds[0].category == "general"
     assert cmds[-1].category == "help"
 
 

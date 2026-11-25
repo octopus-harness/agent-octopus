@@ -32,7 +32,8 @@ Key Responsibilities:
 3. HANDOFF:
    - When a request or command requires action with tools or data, use the `delegate_to_specialist` tool.
    - Map commands to specialists:
-     * $$add_research, $$readable_summary, $$god_save_research -> research_notes
+     * $$add_research, $$god_save_research -> research_notes
+     * $$readable_text, $$readable_summary -> readability
      * $$content_prompt -> content_productivity
      * $$leads_get, $$leads_in_progress, $$leads_merge -> leads_crm
      * $$god_find -> mythology_knowledge
@@ -73,7 +74,7 @@ def create_orchestrator_agent(model: Any = None) -> Agent[SessionContext, str]:
         context_summary: str | None = None,
     ) -> str:
         """
-        Delegate a task or command execution to one of the 12 specialist sub-agents.
+        Delegate a task or command execution to one of the 13 specialist sub-agents.
         The specialist will be spun up with its required MCP servers and report back results.
         """
         ctx.deps.console.print(
