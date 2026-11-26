@@ -2,6 +2,7 @@ from agent_octopus.models import SpecialistName
 from .base import (
     SpecialistDefinition,
     apply_readability_pass,
+    clean_readability_output,
     execute_specialist_handoff,
     load_mcp_config,
 )
@@ -44,6 +45,7 @@ __all__ = [
     "SPECIALISTS",
     "READABILITY_ENHANCED_SPECIALISTS",
     "apply_readability_pass",
+    "clean_readability_output",
     "execute_specialist_handoff",
     "load_mcp_config",
 ]

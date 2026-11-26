@@ -1,3 +1,4 @@
+import re
 import sys
 from contextlib import AsyncExitStack
 from dataclasses import dataclass
@@ -30,6 +31,35 @@ def _get_specialists_module():
     return sys.modules.get("agent_octopus.specialists")
 
 
+def clean_readability_output(text: str) -> str:
+    """
+    Cleans readability output by removing conversational preambles
+    and trailing changelogs or 'Changes made:' meta-commentary.
+    """
+    if not text:
+        return ""
+
+    cleaned = text.strip()
+
+    # Strip leading preambles like "Here is the rewritten text:\n\n"
+    cleaned = re.sub(
+        r"^(?:Here is (?:the )?(?:rewritten|polished|updated|revised) [^:\n]+:\s*\n+)+",
+        "",
+        cleaned,
+        flags=re.IGNORECASE,
+    )
+
+    # Strip trailing changelog sections (e.g. "Changes made:\n- ...", "What changed:\n- ...")
+    cleaned = re.sub(
+        r"\n+(?:---+\n+)?(?:#*\s*(?:Changes made|What changed|Summary of changes|Edits made|Key changes|Notes on changes|Changelog)\s*:\s*.*)$",
+        "",
+        cleaned,
+        flags=re.IGNORECASE | re.DOTALL,
+    )
+
+    return cleaned.strip()
+
+
 async def apply_readability_pass(
     ctx: RunContext[SessionContext],
     raw_text: str,
@@ -49,14 +79,18 @@ async def apply_readability_pass(
         rewrite_req = HandoffRequest(
             specialist="readability",
             command_name=command_name,
-            task=f"Pass the following text through the $${command_name} command runbook and return the rewritten readable prose:\n\n{raw_text}",
+            task=(
+                f"Pass the following text through the $${command_name} command runbook and return "
+                f"ONLY the rewritten readable prose without any changelog, list of changes made, "
+                f"explanations, or meta-commentary:\n\n{raw_text}"
+            ),
             context_summary=f"Rewriting specialist output for readability in user voice: {raw_text[:200]}",
         )
         pkg = _get_specialists_module()
         handoff_fn = getattr(pkg, "execute_specialist_handoff", execute_specialist_handoff)
         rewrite_res = await handoff_fn(ctx, rewrite_req)
         if rewrite_res.output and not rewrite_res.output.startswith("Error:"):
-            return rewrite_res.output
+            return clean_readability_output(rewrite_res.output)
     except Exception as e:
         ctx.deps.console.print(
             f"[yellow]Warning: Readability pass failed: {e}. Preserving raw output.[/yellow]"
