@@ -325,5 +325,37 @@ def test_extract_plan_options_cinderblock_domains():
     assert options[10].tool_name == "$$statesman_save_research"
 
 
+def test_known_cinderblock_tools_export_and_compatibility():
+    from agent_octopus.plan_parser import (
+        KNOWN_CINDERBLOCK_TOOLS,
+        KNOWN_SYNCRETICA_TOOLS,
+        COMMON_CINDERBLOCK_TOOLS,
+        SYNCRETICA_TOOLS,
+        ASTRONOMER_TOOLS,
+        BIOLOGIST_TOOLS,
+        CHEMIST_TOOLS,
+        PHYSICIST_TOOLS,
+        STATESMAN_TOOLS,
+        RESEARCH_PERSISTENCE_COMMANDS,
+    )
+
+    # Verify alias identity
+    assert KNOWN_SYNCRETICA_TOOLS is KNOWN_CINDERBLOCK_TOOLS
+
+    # Verify all domain modular sets are present
+    assert "compute_clusters" in COMMON_CINDERBLOCK_TOOLS
+    assert "list_gods" in SYNCRETICA_TOOLS
+    assert "list_star_systems" in ASTRONOMER_TOOLS
+    assert "list_species" in BIOLOGIST_TOOLS
+    assert "list_molecules" in CHEMIST_TOOLS
+    assert "list_subatomic_particles" in PHYSICIST_TOOLS
+    assert "list_countries" in STATESMAN_TOOLS
+    assert "$$astronomer_save_research" in RESEARCH_PERSISTENCE_COMMANDS
+
+    # Verify sorted by length descending
+    for i in range(len(KNOWN_CINDERBLOCK_TOOLS) - 1):
+        assert len(KNOWN_CINDERBLOCK_TOOLS[i]) >= len(KNOWN_CINDERBLOCK_TOOLS[i + 1])
+
+
 
 

@@ -12,24 +12,20 @@ class PlanOption:
     raw_text: str = ""
 
 
-KNOWN_SYNCRETICA_TOOLS = sorted([
-    # Shared Cinderblock clustering, reporting, search, job, and system tools
+# Core tools shared across all 6 Cinderblock platforms (including Syncretica)
+CORE_CINDERBLOCK_TOOLS = [
     "compute_clusters",
     "create_cluster_snapshot",
     "list_cluster_snapshots",
     "get_cluster_snapshot",
     "delete_cluster_snapshot",
-    "list_cluster_groups",
     "get_cluster_group",
     "create_cluster_report",
-    "delete_cluster_report",
     "generate_deep_synthesis",
     "wait_for_cluster_report",
     "list_cluster_reports",
     "get_cluster_report",
-    "list_report_summaries",
     "get_report_summary",
-    "list_report_sub_reports",
     "get_report_sub_report",
     "find_counterparts",
     "search",
@@ -41,7 +37,20 @@ KNOWN_SYNCRETICA_TOOLS = sorted([
     "update_context_window",
     "trigger_bulk_embeddings",
     "get_openapi_spec",
-    # Syncretica (Mythology)
+]
+
+# Extended cluster reporting tools available on Astronomer, Biologist, Chemist, Physicist, and Statesman
+EXTENDED_CLUSTER_REPORT_TOOLS = [
+    "delete_cluster_report",
+    "list_report_sub_reports",
+    "list_cluster_groups",
+    "list_report_summaries",
+]
+
+COMMON_CINDERBLOCK_TOOLS = CORE_CINDERBLOCK_TOOLS + EXTENDED_CLUSTER_REPORT_TOOLS
+
+# Syncretica (Mythology)
+SYNCRETICA_TOOLS = [
     "list_gods",
     "get_god",
     "create_god",
@@ -66,7 +75,10 @@ KNOWN_SYNCRETICA_TOOLS = sorted([
     "upsert_pantheons_batch",
     "populate_pantheons",
     "populate_pantheon_gods",
-    # Astronomer
+]
+
+# Astronomer
+ASTRONOMER_TOOLS = [
     "list_cosmic_structures",
     "get_cosmic_structure",
     "create_cosmic_structure",
@@ -92,7 +104,10 @@ KNOWN_SYNCRETICA_TOOLS = sorted([
     "upsert_celestial_bodies_batch",
     "generate_celestial_body_embedding",
     "populate_celestial_bodies_bulk",
-    # Biologist
+]
+
+# Biologist
+BIOLOGIST_TOOLS = [
     "list_biomes",
     "get_biome",
     "create_biome",
@@ -118,7 +133,10 @@ KNOWN_SYNCRETICA_TOOLS = sorted([
     "upsert_organisms_batch",
     "generate_organism_embedding",
     "populate_organisms_bulk",
-    # Chemist
+]
+
+# Chemist
+CHEMIST_TOOLS = [
     "list_chemical_classes",
     "get_chemical_class",
     "create_chemical_class",
@@ -144,7 +162,10 @@ KNOWN_SYNCRETICA_TOOLS = sorted([
     "upsert_functional_groups_batch",
     "generate_functional_group_embedding",
     "populate_functional_groups_bulk",
-    # Physicist
+]
+
+# Physicist
+PHYSICIST_TOOLS = [
     "list_particle_groups",
     "get_particle_group",
     "create_particle_group",
@@ -170,7 +191,10 @@ KNOWN_SYNCRETICA_TOOLS = sorted([
     "upsert_quantum_states_batch",
     "generate_quantum_state_embedding",
     "populate_quantum_states_bulk",
-    # Statesman
+]
+
+# Statesman
+STATESMAN_TOOLS = [
     "list_continents",
     "get_continent",
     "create_continent",
@@ -196,7 +220,10 @@ KNOWN_SYNCRETICA_TOOLS = sorted([
     "upsert_cities_batch",
     "generate_city_embedding",
     "populate_cities_bulk",
-    # Research Persistence Commands
+]
+
+# Research Persistence Commands
+RESEARCH_PERSISTENCE_COMMANDS = [
     "$$god_save_research",
     "god_save_research",
     "$$astronomer_save_research",
@@ -211,7 +238,37 @@ KNOWN_SYNCRETICA_TOOLS = sorted([
     "statesman_save_research",
     "$$add_research",
     "add_research",
-], key=len, reverse=True)
+]
+
+KNOWN_CINDERBLOCK_TOOLS = sorted(
+    list(
+        set(
+            COMMON_CINDERBLOCK_TOOLS
+            + SYNCRETICA_TOOLS
+            + ASTRONOMER_TOOLS
+            + BIOLOGIST_TOOLS
+            + CHEMIST_TOOLS
+            + PHYSICIST_TOOLS
+            + STATESMAN_TOOLS
+            + RESEARCH_PERSISTENCE_COMMANDS
+        )
+    ),
+    key=len,
+    reverse=True,
+)
+
+# Backward-compatibility alias
+KNOWN_SYNCRETICA_TOOLS = KNOWN_CINDERBLOCK_TOOLS
+
+# Explicit domain-to-MCP tool mappings matching each platform's MCP server capabilities
+CINDERBLOCK_DOMAIN_TOOLS: dict[str, list[str]] = {
+    "syncretica": CORE_CINDERBLOCK_TOOLS + SYNCRETICA_TOOLS,
+    "astronomer": COMMON_CINDERBLOCK_TOOLS + ASTRONOMER_TOOLS,
+    "biologist": COMMON_CINDERBLOCK_TOOLS + BIOLOGIST_TOOLS,
+    "chemist": COMMON_CINDERBLOCK_TOOLS + CHEMIST_TOOLS,
+    "physicist": COMMON_CINDERBLOCK_TOOLS + PHYSICIST_TOOLS,
+    "statesman": COMMON_CINDERBLOCK_TOOLS + STATESMAN_TOOLS,
+}
 
 
 def extract_plan_options(text: str) -> list[PlanOption]:
@@ -300,7 +357,7 @@ def extract_plan_options(text: str) -> list[PlanOption]:
         if tool_line_match:
             raw_tool = tool_line_match.group(1).strip()
             tool_matches = []
-            for known in KNOWN_SYNCRETICA_TOOLS:
+            for known in KNOWN_CINDERBLOCK_TOOLS:
                 pattern = rf"(?:`|\b|^|(?<=[\s])){re.escape(known)}(?:`|\b|$|(?=[\s:,]))"
                 tm = re.search(pattern, raw_tool)
                 if tm:
@@ -316,7 +373,7 @@ def extract_plan_options(text: str) -> list[PlanOption]:
         else:
             # Check for known tools in the body (prefer earliest occurrence in body)
             tool_matches = []
-            for known in KNOWN_SYNCRETICA_TOOLS:
+            for known in KNOWN_CINDERBLOCK_TOOLS:
                 pattern = rf"(?:`|\b|^|(?<=[\s])){re.escape(known)}(?:`|\b|$|(?=[\s:,]))"
                 tm = re.search(pattern, item_body)
                 if tm:
@@ -340,7 +397,7 @@ def extract_plan_options(text: str) -> list[PlanOption]:
 
         # Fallback check in title itself
         if not tool_name:
-            for known in KNOWN_SYNCRETICA_TOOLS:
+            for known in KNOWN_CINDERBLOCK_TOOLS:
                 if known.lower() in title.lower():
                     tool_name = known
                     break

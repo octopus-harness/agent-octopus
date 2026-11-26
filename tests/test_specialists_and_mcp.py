@@ -350,7 +350,8 @@ def test_coerce_mcp_tool_args():
 
 
 def test_summarize_clusters_result_preserves_cinderblock_domain_keys():
-    raw_data = {
+    # 1. Astronomer payload: should include cosmic_structures and shared_themes, but NOT pantheons
+    raw_astro = {
         "target_type": "StarSystem",
         "level": 6,
         "clusters": [
@@ -365,9 +366,35 @@ def test_summarize_clusters_result_preserves_cinderblock_domain_keys():
         ],
         "singletons": [{"name": "Sirius"}],
     }
-    summarized = summarize_clusters_result(raw_data)
-    assert summarized["top_clusters"][0]["cosmic_structures"] == ["Local Bubble", "Solar Neighborhood"]
-    assert summarized["top_clusters"][0]["sample_members"] == ["TRAPPIST-1", "Proxima Centauri"]
+    summarized_astro = summarize_clusters_result(raw_astro)
+    astro_cluster = summarized_astro["top_clusters"][0]
+    assert astro_cluster["cosmic_structures"] == ["Local Bubble", "Solar Neighborhood"]
+    assert astro_cluster["shared_themes"] == ["M-Dwarf", "Habitable Zone"]
+    assert "pantheons" not in astro_cluster
+    assert astro_cluster["sample_members"] == ["TRAPPIST-1", "Proxima Centauri"]
+
+    # 2. Syncretica payload: should include pantheons and shared_themes, but NOT cosmic_structures
+    raw_syncretica = {
+        "target_type": "God",
+        "level": 6,
+        "clusters": [
+            {
+                "id": 2,
+                "name": "Primordial Solar Archetype",
+                "size": 2,
+                "shared_themes": ["Solar", "Creation"],
+                "pantheons": ["Egyptian", "Norse"],
+                "members": [{"name": "Ra"}, {"name": "Sol"}],
+            }
+        ],
+        "singletons": [{"name": "Loki"}],
+    }
+    summarized_syncretica = summarize_clusters_result(raw_syncretica)
+    syncretica_cluster = summarized_syncretica["top_clusters"][0]
+    assert syncretica_cluster["pantheons"] == ["Egyptian", "Norse"]
+    assert syncretica_cluster["shared_themes"] == ["Solar", "Creation"]
+    assert "cosmic_structures" not in syncretica_cluster
+    assert syncretica_cluster["sample_members"] == ["Ra", "Sol"]
 
 
 def test_create_toolset_for_server_registers_process_tool_call():
