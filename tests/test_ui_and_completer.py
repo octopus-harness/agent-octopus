@@ -194,3 +194,38 @@ def test_resolve_user_input_without_active_plan():
     resolved_text = resolve_user_input("find me a god", plan_options=[], commands=commands)
     assert resolved_text == "find me a god"
 
+
+def test_resolve_user_input_choice_3_operational_next_steps():
+    from agent_octopus.plan_parser import extract_plan_options
+
+    text = """
+Operational Next Steps
+
+1 Synthesis Report — create_cluster_report(cluster_snapshot_id=10, prompt='Analyze...')
+  Generate a scholarly Map-Reduce report on creator deity theology across the full snapshot.
+2 Deep Synthesis Monograph — generate_deep_synthesis(report_id=<report_id>, batch_size=5)
+  Execute a 3-phase hierarchical deep synthesis after report completion.
+3 Inspect Specific Clusters — get_cluster_group(id=<group_id>, include_members=true)
+  Drill into individual cluster groups to verify deity pairings and Atum's specific neighbors.
+4 View Snapshot Details — get_cluster_snapshot(id=10, include_groups=true, include_members=true)
+  Pull the full breakdown to locate Atum's cluster and audit all member deities.
+5 Compare with Myth Clustering — create_cluster_snapshot(target_type='Myth', level=6, title='Creator Myth Narratives Snapshot')
+  Build a parallel myth-level snapshot to isolate creator narratives from deity profiles.
+6 Research Persistence — $$god_save_research
+  Archive findings on Atum's archetype clustering for future comparative mythology work.
+"""
+    plan_options = extract_plan_options(text)
+    commands = [
+        ComCommand(index=1, name="$$content_prompt", raw_name="content_prompt", category="content", args="-", description="Prompt"),
+        ComCommand(index=2, name="$$leads_get", raw_name="leads_get", category="crm", args="-", description="Leads"),
+        ComCommand(index=3, name="$$leads_in_progress", raw_name="leads_in_progress", category="crm", args="-", description="Leads"),
+    ]
+
+    # Hitting '3' must resolve to option 3 ("Inspect Specific Clusters — get_cluster_group..."), NOT commands[2] ($$leads_in_progress)
+    resolved = resolve_user_input("3", plan_options=plan_options, commands=commands)
+    assert "$$leads_in_progress" not in resolved
+    assert resolved == plan_options[2].raw_text
+    assert "Inspect Specific Clusters — get_cluster_group(id=<group_id>, include_members=true)" in resolved
+    assert "Drill into individual cluster groups" in resolved
+
+
