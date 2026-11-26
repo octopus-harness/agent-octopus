@@ -35,8 +35,12 @@ def extract_plan_options(text: str) -> list[PlanOption]:
     if not text:
         return []
 
-    # 1. Locate the start of the plan section
-    match = re.search(r"(?:^|\n)[#\s]*Recommended\s+(?:Syncretica\s+)?Plan\b", text, re.IGNORECASE)
+    # 1. Locate the start of the plan / actions section
+    match = re.search(
+        r"(?:^|\n)[#\s]*Recommended\s+(?:Syncretica\s+)?(?:Next Steps & Actions|Actions|Plan)\b",
+        text,
+        re.IGNORECASE,
+    )
     if not match:
         return []
 
@@ -61,12 +65,21 @@ def extract_plan_options(text: str) -> list[PlanOption]:
     options: list[PlanOption] = []
     for i, m in enumerate(matches):
         step_num = int(m.group(1))
-        title = m.group(2).strip().strip("*:").strip()
+        raw_header = m.group(2).strip()
+
+        # If header contains a bold title: **Title**: <optional rest> or Title**: <optional rest>
+        if "**" in raw_header:
+            title_part, rest_part = raw_header.split("**", 1)
+            title = title_part.strip().strip("*").strip()
+            header_rest = rest_part.lstrip(":").strip()
+        else:
+            title = raw_header.strip("*:").strip()
+            header_rest = ""
 
         # Item body is from the end of this header to start of next (or end of section)
         start_pos = m.end()
         end_pos = matches[i + 1].start() if i + 1 < len(matches) else len(plan_section)
-        item_body = plan_section[start_pos:end_pos].strip()
+        item_body = (header_rest + "\n" + plan_section[start_pos:end_pos]).strip()
 
         # Find tool references
         tool_name = None
@@ -88,14 +101,14 @@ def extract_plan_options(text: str) -> list[PlanOption]:
             if remainder:
                 details = remainder
         else:
-            # Check for backticked known tools or **`tool`** in the body
+            # Check for known tools in the body
             for known in KNOWN_SYNCRETICA_TOOLS:
-                pattern = rf"`{re.escape(known)}`"
+                pattern = rf"(?:`|\b){re.escape(known)}(?:`|\b)"
                 if re.search(pattern, item_body):
                     tool_name = known
                     # Look for parameters right after: e.g. `compute_clusters` (target: "God", level: 5)
-                    # or **`compute_clusters`** (target: "God", level: 5)
-                    param_match = re.search(rf"(?:\*\*)?`{re.escape(known)}`(?:\*\*)?\s*\(([^)]+)\)", item_body)
+                    # or `compute_clusters(target: "God", level: 5)`
+                    param_match = re.search(rf"(?:\*\*)?`?{re.escape(known)}`?(?:\*\*)?\s*\(([^)]+)\)", item_body)
                     if param_match:
                         details = f"({param_match.group(1).strip()})"
                     break

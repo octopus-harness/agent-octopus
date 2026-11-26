@@ -41,7 +41,7 @@ def test_specialists_mapping():
 
 def test_mythology_knowledge_planning_prompt():
     mythology_spec = SPECIALISTS["mythology_knowledge"]
-    assert "Recommended Syncretica Plan" in mythology_spec.system_prompt
+    assert "Recommended Next Steps & Actions" in mythology_spec.system_prompt
     assert "find_counterparts" in mythology_spec.system_prompt
     assert "compute_clusters" in mythology_spec.system_prompt
     assert "create_cluster_snapshot" in mythology_spec.system_prompt

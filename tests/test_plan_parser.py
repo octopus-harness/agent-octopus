@@ -99,6 +99,41 @@ What changed:
     assert options[4].tool_name == "$$god_save_research"
 
 
+def test_extract_plan_options_next_steps_and_actions():
+    text = """
+## 🔱 ATUM — Egyptian Creator God
+
+### Recommended Next Steps & Actions
+
+1. **Cross-Pantheon Counterparts**: `find_counterparts(entity_type='god', id=676, limit=10)` — Explore nearest vector neighbors across pantheons.
+2. **Archetype Clustering**: `compute_clusters(target_type='God', level=5-8, full_coverage=false)` — Compute dynamic connected-components clusters.
+3. **Freeze Cluster Snapshot**: `create_cluster_snapshot(target_type='God', level=6, title='Auto-Genesis Creator Deities')` — Freeze a catalog cluster snapshot.
+4. **Map-Reduce Synthesis Report**: `create_cluster_report(cluster_snapshot_id=12, prompt='Analyze cross-cultural archetypes')` — Trigger a 2-Phase Map-Reduce scholarly report.
+5. **Hierarchical Deep Synthesis**: `generate_deep_synthesis(report_id=12, batch_size=5)` — Run a 3-Phase monograph synthesis.
+6. **Research Persistence**: `$$god_save_research` — Save findings and notes to NoteKing.
+"""
+    options = extract_plan_options(text)
+    assert len(options) == 6
+    assert options[0].index == 1
+    assert options[0].title == "Cross-Pantheon Counterparts"
+    assert options[0].tool_name == "find_counterparts"
+
+    assert options[1].index == 2
+    assert options[1].tool_name == "compute_clusters"
+
+    assert options[2].index == 3
+    assert options[2].tool_name == "create_cluster_snapshot"
+
+    assert options[3].index == 4
+    assert options[3].tool_name == "create_cluster_report"
+
+    assert options[4].index == 5
+    assert options[4].tool_name == "generate_deep_synthesis"
+
+    assert options[5].index == 6
+    assert options[5].tool_name == "$$god_save_research"
+
+
 def test_extract_plan_options_empty_or_missing():
     assert extract_plan_options("") == []
     assert extract_plan_options("No plan here, just general text.") == []
