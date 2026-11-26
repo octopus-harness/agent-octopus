@@ -195,3 +195,19 @@ def test_plan_selector_keybindings_and_toolbar():
     assert state["dismissed"] is True
     assert toolbar_fn() is None
 
+
+def test_extract_plan_options_wait_for_cluster_report():
+    text = """
+### Recommended Next Steps & Actions
+1. **Map-Reduce Synthesis Report**: `create_cluster_report(cluster_snapshot_id=7, prompt='Analyze auto-genesis')` — Trigger report.
+2. **Track Report Progress**: `wait_for_cluster_report(id=8, timeout_ms=600000)` — Poll report progress until complete.
+"""
+    options = extract_plan_options(text)
+    assert len(options) == 2
+    assert options[0].tool_name == "create_cluster_report"
+    assert options[1].tool_name == "wait_for_cluster_report"
+    assert options[1].index == 2
+    assert "wait_for_cluster_report" in options[1].label
+    assert "(id=8, timeout_ms=600000)" in options[1].action_text
+
+

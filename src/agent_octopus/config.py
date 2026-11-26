@@ -33,6 +33,10 @@ class Settings(BaseSettings):
         default="com",
         alias="COM_BIN",
     )
+    syncretica_web_url: str = Field(
+        default="http://localhost:3002",
+        alias="SYNCRETICA_WEB_URL",
+    )
 
 
 class MCPServerDefinition(BaseModel):

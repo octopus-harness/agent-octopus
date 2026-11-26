@@ -4,6 +4,7 @@ from .base import (
     apply_readability_pass,
     clean_readability_output,
     execute_specialist_handoff,
+    render_specialist_system_prompt,
     load_mcp_config,
 )
 from .astronomer import SPECIALIST as astronomer_specialist
@@ -47,5 +48,6 @@ __all__ = [
     "apply_readability_pass",
     "clean_readability_output",
     "execute_specialist_handoff",
+    "render_specialist_system_prompt",
     "load_mcp_config",
 ]
