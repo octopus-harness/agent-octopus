@@ -3,7 +3,8 @@ from prompt_toolkit.completion import CompleteEvent
 from rich.table import Table
 
 from agent_octopus.models import ComCommand
-from agent_octopus.cli import render_grouped_commands_table, OctoCommandCompleter
+from agent_octopus.plan_parser import PlanOption
+from agent_octopus.cli import render_grouped_commands_table, OctoCommandCompleter, resolve_user_input
 
 
 def sample_commands() -> list[ComCommand]:
@@ -139,3 +140,57 @@ def test_octo_command_completer_normal_text_ignored():
 
     # Should not trigger completion
     assert len(completions) == 0
+
+
+def test_resolve_user_input_with_active_plan():
+    plan_options = [
+        PlanOption(
+            index=1,
+            title="Archetype Clustering",
+            tool_name="compute_clusters",
+            action_text="Execute plan step 1: Archetype Clustering using compute_clusters",
+            label="1. Archetype Clustering (compute_clusters)",
+            raw_text="1 Archetype Clustering: compute_clusters(target_type='God', level=5, full_coverage=false) : Group these creator archetypes into connected-component clusters for structural analysis.",
+        ),
+        PlanOption(
+            index=2,
+            title="Freeze Cluster Snapshot",
+            tool_name="create_cluster_snapshot",
+            action_text="Execute plan step 2: Freeze Cluster Snapshot",
+            label="2. Freeze Cluster Snapshot (create_cluster_snapshot)",
+            raw_text="2 Freeze Cluster Snapshot: create_cluster_snapshot(target_type='God', level=6)",
+        ),
+    ]
+    commands = sample_commands()
+
+    # Selecting '1' must pick the plan option's raw_text, NOT commands[0] ($$add_research / $$content_prompt)
+    resolved = resolve_user_input("1", plan_options=plan_options, commands=commands)
+    assert resolved == plan_options[0].raw_text
+    assert "$$add_research" not in resolved
+    assert "$$content_prompt" not in resolved
+
+    # Selecting '1 extra_arg'
+    resolved_args = resolve_user_input("1 extra_arg", plan_options=plan_options, commands=commands)
+    assert resolved_args == f"{plan_options[0].raw_text} extra_arg"
+
+    # Selecting an out-of-range number (e.g. '9') when plan is active passes through raw input
+    resolved_out_of_range = resolve_user_input("9", plan_options=plan_options, commands=commands)
+    assert resolved_out_of_range == "9"
+
+    # Input already matching the choice text remains as-is without duplicating
+    already_loaded = plan_options[0].raw_text
+    resolved_loaded = resolve_user_input(already_loaded, plan_options=plan_options, commands=commands)
+    assert resolved_loaded == already_loaded
+
+
+def test_resolve_user_input_without_active_plan():
+    commands = sample_commands()
+
+    # When no plan is active, '1' maps to commands[0] ($$add_research)
+    resolved = resolve_user_input("1", plan_options=[], commands=commands)
+    assert "The user selected option 1 ($$add_research)" in resolved
+
+    # Non-digit input is untouched
+    resolved_text = resolve_user_input("find me a god", plan_options=[], commands=commands)
+    assert resolved_text == "find me a god"
+

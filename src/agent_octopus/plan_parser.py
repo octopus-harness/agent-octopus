@@ -9,6 +9,7 @@ class PlanOption:
     tool_name: str | None
     action_text: str
     label: str
+    raw_text: str = ""
 
 
 KNOWN_SYNCRETICA_TOOLS = [
@@ -52,10 +53,10 @@ def extract_plan_options(text: str) -> list[PlanOption]:
     if section_end:
         plan_section = plan_section[:section_end.start()]
 
-    # 2. Split into numbered items: "1. ...", "### 1. ...", etc.
+    # 2. Split into numbered items: "1. ...", "### 1. ...", "1 ...", etc.
     # Pattern to find numbered item headers
     item_pattern = re.compile(
-        r"(?:^|\n)(?:###?\s*)?(\d+)[\.\)]\s*(?:\*\*)?(.*?)(?:\*\*)?(?=\n|$)",
+        r"(?:^|\n)(?:###?\s*)?(\d+)(?:[\.\)]\s*|\s+)(?:\*\*)?(.*?)(?:\*\*)?(?=\n|$)",
         re.MULTILINE,
     )
 
@@ -73,6 +74,10 @@ def extract_plan_options(text: str) -> list[PlanOption]:
             title_part, rest_part = raw_header.split("**", 1)
             title = title_part.strip().strip("*").strip()
             header_rest = rest_part.lstrip(":").strip()
+        elif ":" in raw_header:
+            title_part, rest_part = raw_header.split(":", 1)
+            title = title_part.strip()
+            header_rest = rest_part.strip()
         else:
             title = raw_header.strip("*:").strip()
             header_rest = ""
@@ -81,6 +86,7 @@ def extract_plan_options(text: str) -> list[PlanOption]:
         start_pos = m.end()
         end_pos = matches[i + 1].start() if i + 1 < len(matches) else len(plan_section)
         item_body = (header_rest + "\n" + plan_section[start_pos:end_pos]).strip()
+        raw_text = re.sub(r"^[#\s]+", "", plan_section[m.start():end_pos].strip())
 
         # Find tool references
         tool_name = None
@@ -104,7 +110,7 @@ def extract_plan_options(text: str) -> list[PlanOption]:
         else:
             # Check for known tools in the body
             for known in KNOWN_SYNCRETICA_TOOLS:
-                pattern = rf"(?:`|\b){re.escape(known)}(?:`|\b)"
+                pattern = rf"(?:`|\b|^|(?<=[\s])){re.escape(known)}(?:`|\b|$|(?=[\s:,]))"
                 if re.search(pattern, item_body):
                     tool_name = known
                     # Look for parameters right after: e.g. `compute_clusters` (target: "God", level: 5)
@@ -139,6 +145,7 @@ def extract_plan_options(text: str) -> list[PlanOption]:
                 tool_name=tool_name,
                 action_text=action_text.strip(),
                 label=label,
+                raw_text=raw_text,
             )
         )
 

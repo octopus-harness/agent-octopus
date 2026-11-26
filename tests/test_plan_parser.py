@@ -211,3 +211,33 @@ def test_extract_plan_options_wait_for_cluster_report():
     assert "(id=8, timeout_ms=600000)" in options[1].action_text
 
 
+def test_extract_plan_options_format_without_dots_or_bold():
+    text = """
+Recommended Next Steps & Actions
+
+1 Archetype Clustering: compute_clusters(target_type='God', level=5, full_coverage=false) : Group these creator archetypes into connected-component clusters for structural analysis.
+2 Freeze Cluster Snapshot: create_cluster_snapshot(target_type='God', level=6, title='Primordial Creator & Auto-genesis Archetypes') : Snapshot the creator deity cluster for reproducible scholarly tracking.
+3 Map-Reduce Synthesis Report: create_cluster_report(cluster_snapshot_id=<id>, prompt='Compare auto-genesis creation narratives and primordial sovereignty across Egyptian, Mesoamerican, and African creator traditions.') : Generate a 2-Phase cross-cultural report.
+4 Deep Synthesis Monograph: generate_deep_synthesis(report_id=<id>, batch_size=5) : Produce a 3-Phase hierarchical monograph synthesizing creator deity parallels.
+5 Retrieve Full Profiles: get_god(id=<id>, include_myth=true) : Examine myth themes for specific counterparts like Marduk, Olodumare, or Ometeotl for detailed comparative analysis.
+6 Research Persistence: $$god_save_research : Archive Atum's counterpart network and analysis notes to NoteKing for long-term reference.
+"""
+    options = extract_plan_options(text)
+    assert len(options) == 6
+    assert options[0].index == 1
+    assert options[0].title == "Archetype Clustering"
+    assert options[0].tool_name == "compute_clusters"
+    assert options[0].raw_text == "1 Archetype Clustering: compute_clusters(target_type='God', level=5, full_coverage=false) : Group these creator archetypes into connected-component clusters for structural analysis."
+    assert "(compute_clusters)" in options[0].label
+
+    assert options[1].index == 2
+    assert options[1].title == "Freeze Cluster Snapshot"
+    assert options[1].tool_name == "create_cluster_snapshot"
+
+    assert options[5].index == 6
+    assert options[5].title == "Research Persistence"
+    assert options[5].tool_name == "$$god_save_research"
+    assert "$$god_save_research" in options[5].raw_text
+
+
+
