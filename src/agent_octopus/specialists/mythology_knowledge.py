@@ -19,7 +19,7 @@ SPECIALIST = SpecialistDefinition(
         "3. **Freeze Cluster Snapshot**: `create_cluster_snapshot(target_type='God', level=6, title='...')` — Freeze a catalog cluster snapshot.\n"
         "4. **Map-Reduce Synthesis Report**: `create_cluster_report(cluster_snapshot_id=<id>, prompt='...')` — Trigger a 2-Phase Map-Reduce scholarly report.\n"
         "5. **Hierarchical Deep Synthesis**: `generate_deep_synthesis(report_id=<id>, batch_size=5)` — Run a 3-Phase monograph synthesis.\n"
-        "6. **Research Persistence**: `$$god_save_research` — Save findings and notes to NoteKing.\n\n"
+        "6. **Research Persistence**: `$$god_save_research` — Save findings and notes to NoteKing via Research Specialist.\n\n"
         "Present each choice with its Title, standalone Tool Call (with concrete parameters filled in), and a 1-sentence Rationale."
     ),
     apply_readability_pass=True,

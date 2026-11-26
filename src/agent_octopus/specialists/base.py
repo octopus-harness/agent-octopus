@@ -138,7 +138,8 @@ async def execute_specialist_handoff(
     if session.shared_ledger:
         recent_ledger = "\n\n### RECENT WORK IN THIS SESSION:\n"
         for entry in session.shared_ledger[-3:]:
-            recent_ledger += f"[{entry.specialist}]: {entry.summary}\n{entry.output[:400]}...\n"
+            out_preview = entry.output[:5000] + ("..." if len(entry.output) > 5000 else "")
+            recent_ledger += f"[{entry.specialist}]: {entry.summary}\n{out_preview}\n"
 
     extra_instructions = (
         f"{spec.system_prompt}\n"

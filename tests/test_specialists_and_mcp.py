@@ -209,3 +209,109 @@ async def test_delegate_to_specialist_handles_unexpected_error():
         assert "Specialist [mythology_knowledge] failed with error: Connection exploded" in output
 
 
+@pytest.mark.asyncio
+async def test_delegate_to_specialist_reroutes_research_persistence_to_research_notes():
+    console = Console(quiet=True)
+    session = SessionContext(settings=load_settings(), console=console)
+    mock_ctx = MagicMock()
+    mock_ctx.deps = session
+
+    orchestrator = create_orchestrator_agent()
+    delegate_tool = orchestrator._function_toolset.tools["delegate_to_specialist"]
+
+    with patch("agent_octopus.orchestrator.execute_specialist_handoff") as mock_handoff:
+        mock_handoff.return_value = MagicMock(specialist="research_notes", output="Note saved")
+
+        # 1. Direct command name: god_save_research
+        await delegate_tool.function(
+            mock_ctx,
+            specialist="mythology_knowledge",
+            task="Summarize and save Atum research",
+            command_name="god_save_research",
+        )
+        assert mock_handoff.call_count == 1
+        req1 = mock_handoff.call_args[0][1]
+        assert req1.specialist == "research_notes"
+        assert req1.command_name == "god_save_research"
+
+        # 2. Command name with $$ prefix: $$god_save_research
+        await delegate_tool.function(
+            mock_ctx,
+            specialist="mythology_knowledge",
+            task="Persist findings to research project",
+            command_name="$$god_save_research",
+        )
+        assert mock_handoff.call_count == 2
+        req2 = mock_handoff.call_args[0][1]
+        assert req2.specialist == "research_notes"
+        assert req2.command_name == "god_save_research"
+
+        # 3. Natural language task without command_name
+        await delegate_tool.function(
+            mock_ctx,
+            specialist="mythology_knowledge",
+            task="Save research on Atum to NoteKing research project",
+        )
+        assert mock_handoff.call_count == 3
+        req3 = mock_handoff.call_args[0][1]
+        assert req3.specialist == "research_notes"
+        assert req3.command_name == "god_save_research"
+
+        # 4. Normal mythology query stays on mythology_knowledge
+        await delegate_tool.function(
+            mock_ctx,
+            specialist="mythology_knowledge",
+            task="Find a god named Odin",
+            command_name="$$god_find",
+        )
+        assert mock_handoff.call_count == 4
+        req4 = mock_handoff.call_args[0][1]
+        assert req4.specialist == "mythology_knowledge"
+        assert req4.command_name == "god_find"
+
+
+@pytest.mark.asyncio
+async def test_execute_specialist_handoff_preserves_expanded_ledger_context():
+    console = Console(quiet=True)
+    session = SessionContext(settings=load_settings(), console=console)
+    mock_ctx = MagicMock()
+    mock_ctx.deps = session
+
+    # Add a large output from mythology_knowledge (2,000 chars)
+    large_output = "Atum Egyptian Creator Deity Analysis. " * 50  # ~2,000 chars
+    from agent_octopus.models import HandoffResult
+    session.shared_ledger.append(
+        HandoffResult(
+            specialist="mythology_knowledge",
+            command_name="god_find",
+            summary="Atum research profile",
+            output=large_output,
+        )
+    )
+
+    req = HandoffRequest(
+        specialist="research_notes",
+        task="Save research to noteking",
+        command_name="god_save_research",
+    )
+
+    with patch("agent_octopus.specialists.base.load_mcp_config", return_value={
+        "noteking": MCPServerDefinition(command="node", args=[]),
+        "memorable": MCPServerDefinition(command="node", args=[]),
+    }):
+        with patch("agent_octopus.specialists.base.create_toolset_for_server"):
+            with patch("agent_octopus.specialists.base.Agent") as mock_agent_cls:
+                mock_agent = MagicMock()
+                mock_agent.run = AsyncMock(return_value=MagicMock(output="Saved", all_messages=lambda: []))
+                mock_agent_cls.return_value = mock_agent
+
+                await execute_specialist_handoff(mock_ctx, req)
+
+                # Inspect system_prompt passed to specialist_agent
+                call_kwargs = mock_agent_cls.call_args[1]
+                prompt = call_kwargs["system_prompt"]
+                # Must contain the full 2,000 chars without premature 400-char truncation
+                assert large_output in prompt
+
+
+
