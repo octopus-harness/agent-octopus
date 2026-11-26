@@ -9,6 +9,7 @@ SPECIALIST = SpecialistDefinition(
         "transition their statuses, and draft personalized outreach emails.\n"
         "Follow the com command runbook closely (e.g. $$leads_get, $$leads_in_progress, $$leads_merge).\n"
         "If a command requires prior leads from the session, check the provided context summary and ledger.\n"
-        "Use the `question` tool when selecting backlogs or confirming choices."
+        "When asking the user to choose a backlog, use the `question` tool with options=['Coaching backlog', 'Recruiting backlog'].\n"
+        "Use the `question` tool whenever confirming choices or asking interactive questions."
     ),
 )

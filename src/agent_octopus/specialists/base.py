@@ -16,7 +16,7 @@ from agent_octopus.models import (
 )
 from agent_octopus.mcp_loader import load_mcp_config, create_toolset_for_server
 from agent_octopus.com_cli import run_com_get
-from agent_octopus.tools import ask_user_interactive
+from agent_octopus.tools import ask_user_interactive, parse_options_input, track_status
 
 
 @dataclass
@@ -187,10 +187,16 @@ async def execute_specialist_handoff(
         async def question(
             sub_ctx: RunContext[SessionContext],
             question_text: str,
-            options: list[str] | None = None,
+            options: list[str] | str | None = None,
         ) -> str:
-            """Ask the user an interactive question in the terminal and receive their response."""
-            return await ask_user_interactive(sub_ctx.deps, question_text, options)
+            """Ask the user an interactive question in the terminal and receive their response.
+
+            Args:
+                question_text: The question to ask the user.
+                options: Optional list or JSON array of choices for the user to select from.
+            """
+            parsed_options = parse_options_input(options)
+            return await ask_user_interactive(sub_ctx.deps, question_text, parsed_options)
 
         prompt_text = (
             f"TASK: {request.task}\n"
@@ -199,7 +205,7 @@ async def execute_specialist_handoff(
 
         history = session.specialist_histories.get(request.specialist, [])
         try:
-            with console.status(f"[bold cyan]Specialist '{request.specialist}' working...[/bold cyan]"):
+            with track_status(session, f"[bold cyan]Specialist '{request.specialist}' working...[/bold cyan]"):
                 result = await specialist_agent.run(
                     prompt_text,
                     deps=session,
