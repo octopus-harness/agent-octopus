@@ -17,6 +17,8 @@ from agent_octopus.models import SessionContext, ComCommand
 from agent_octopus.com_cli import run_com_list, category_sort_key
 from agent_octopus.orchestrator import create_orchestrator_agent
 from agent_octopus.observability import setup_observability
+from agent_octopus.plan_parser import extract_plan_options, PlanOption
+from agent_octopus.tools import prompt_with_plan_selector
 
 
 CATEGORY_HEADER_STYLE: str = "bold magenta"
@@ -203,9 +205,19 @@ async def async_main():
         style=prompt_style,
     )
 
+    active_plan_options: list[PlanOption] = []
+
     while True:
         try:
-            user_input = (await prompt_session.prompt_async("🐙 octo > ")).strip()
+            if active_plan_options:
+                user_input = (await prompt_with_plan_selector(
+                    prompt_session,
+                    "🐙 octo > ",
+                    active_plan_options,
+                )).strip()
+                active_plan_options = []
+            else:
+                user_input = (await prompt_session.prompt_async("🐙 octo > ")).strip()
         except (KeyboardInterrupt, EOFError):
             console.print("\n[dim]Exiting Agent Octopus. Goodbye![/dim]")
             break
@@ -242,6 +254,9 @@ async def async_main():
             console.print()
             console.print(Markdown(str(result.output)))
             console.print()
+
+            # Check if output contains a plan to offer in the next prompt turn
+            active_plan_options = extract_plan_options(str(result.output))
         except Exception as e:
             console.print(f"[bold red]Error during agent execution:[/bold red] {e}")
 

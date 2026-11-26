@@ -1,3 +1,4 @@
+import re
 import sys
 from contextlib import AsyncExitStack
 from dataclasses import dataclass
@@ -5,6 +6,7 @@ from typing import Any
 from rich.panel import Panel
 
 from pydantic_ai import Agent, RunContext
+from pydantic_ai.exceptions import ModelContextWindowExceededError
 from agent_octopus.config import get_model
 from agent_octopus.models import (
     SpecialistName,
@@ -23,15 +25,40 @@ class SpecialistDefinition:
     description: str
     mcp_servers: list[str]
     system_prompt: str
-
-
-READABILITY_ENHANCED_SPECIALISTS: set[SpecialistName] = {
-    "mythology_knowledge",
-}
+    apply_readability_pass: bool = False
 
 
 def _get_specialists_module():
     return sys.modules.get("agent_octopus.specialists")
+
+
+def clean_readability_output(text: str) -> str:
+    """
+    Cleans readability output by removing conversational preambles
+    and trailing changelogs or 'Changes made:' meta-commentary.
+    """
+    if not text:
+        return ""
+
+    cleaned = text.strip()
+
+    # Strip leading preambles like "Here is the rewritten text:\n\n"
+    cleaned = re.sub(
+        r"^(?:Here is (?:the )?(?:rewritten|polished|updated|revised) [^:\n]+:\s*\n+)+",
+        "",
+        cleaned,
+        flags=re.IGNORECASE,
+    )
+
+    # Strip trailing changelog sections (e.g. "Changes made:\n- ...", "What changed:\n- ...")
+    cleaned = re.sub(
+        r"\n+(?:---+\n+)?(?:#*\s*(?:Changes made|What changed|Summary of changes|Edits made|Key changes|Notes on changes|Changelog)\s*:\s*.*)$",
+        "",
+        cleaned,
+        flags=re.IGNORECASE | re.DOTALL,
+    )
+
+    return cleaned.strip()
 
 
 async def apply_readability_pass(
@@ -53,14 +80,18 @@ async def apply_readability_pass(
         rewrite_req = HandoffRequest(
             specialist="readability",
             command_name=command_name,
-            task=f"Pass the following text through the $${command_name} command runbook and return the rewritten readable prose:\n\n{raw_text}",
+            task=(
+                f"Pass the following text through the $${command_name} command runbook and return "
+                f"ONLY the rewritten readable prose without any changelog, list of changes made, "
+                f"explanations, or meta-commentary:\n\n{raw_text}"
+            ),
             context_summary=f"Rewriting specialist output for readability in user voice: {raw_text[:200]}",
         )
         pkg = _get_specialists_module()
         handoff_fn = getattr(pkg, "execute_specialist_handoff", execute_specialist_handoff)
         rewrite_res = await handoff_fn(ctx, rewrite_req)
         if rewrite_res.output and not rewrite_res.output.startswith("Error:"):
-            return rewrite_res.output
+            return clean_readability_output(rewrite_res.output)
     except Exception as e:
         ctx.deps.console.print(
             f"[yellow]Warning: Readability pass failed: {e}. Preserving raw output.[/yellow]"
@@ -107,7 +138,8 @@ async def execute_specialist_handoff(
     if session.shared_ledger:
         recent_ledger = "\n\n### RECENT WORK IN THIS SESSION:\n"
         for entry in session.shared_ledger[-3:]:
-            recent_ledger += f"[{entry.specialist}]: {entry.summary}\n{entry.output[:400]}...\n"
+            out_preview = entry.output[:5000] + ("..." if len(entry.output) > 5000 else "")
+            recent_ledger += f"[{entry.specialist}]: {entry.summary}\n{out_preview}\n"
 
     extra_instructions = (
         f"{spec.system_prompt}\n"
@@ -138,6 +170,7 @@ async def execute_specialist_handoff(
             deps_type=SessionContext,
             toolsets=toolsets,
             system_prompt=extra_instructions,
+            retries=3,
         )
 
         # Register interactive question tool
@@ -156,21 +189,48 @@ async def execute_specialist_handoff(
         )
 
         history = session.specialist_histories.get(request.specialist, [])
-        with console.status(f"[bold cyan]Specialist '{request.specialist}' working...[/bold cyan]"):
-            result = await specialist_agent.run(
-                prompt_text,
-                deps=session,
-                message_history=history,
+        try:
+            with console.status(f"[bold cyan]Specialist '{request.specialist}' working...[/bold cyan]"):
+                result = await specialist_agent.run(
+                    prompt_text,
+                    deps=session,
+                    message_history=history,
+                )
+        except ModelContextWindowExceededError as e:
+            console.print(f"[bold red]Specialist '{request.specialist}' exceeded context window: {e}[/bold red]")
+            error_output = (
+                f"Specialist [{request.specialist}] was unable to complete the request because the "
+                f"context window limit was exceeded: {e}.\n\n"
+                "The tool output or conversation history exceeded the model's capacity. "
+                "Please refine the query with more specific filters or parameters."
             )
+            handoff_res = HandoffResult(
+                specialist=request.specialist,
+                command_name=request.command_name,
+                summary=f"Context window exceeded for {request.specialist}",
+                output=error_output,
+            )
+            session.shared_ledger.append(handoff_res)
+            return handoff_res
+        except Exception as e:
+            console.print(f"[bold red]Specialist '{request.specialist}' failed: {e}[/bold red]")
+            error_output = f"Specialist [{request.specialist}] encountered an error during execution: {e}"
+            handoff_res = HandoffResult(
+                specialist=request.specialist,
+                command_name=request.command_name,
+                summary=f"Execution error for {request.specialist}",
+                output=error_output,
+            )
+            session.shared_ledger.append(handoff_res)
+            return handoff_res
 
         # Update specialist's history
         session.specialist_histories[request.specialist] = result.all_messages()
 
         output_str = str(result.output)
 
-        # Apply automated readability post-processing if specialist is registered
-        enhanced_registry = getattr(pkg, "READABILITY_ENHANCED_SPECIALISTS", READABILITY_ENHANCED_SPECIALISTS)
-        if request.specialist in enhanced_registry:
+        # Apply automated readability post-processing if enabled on specialist definition
+        if spec.apply_readability_pass:
             readability_fn = getattr(pkg, "apply_readability_pass", apply_readability_pass)
             output_str = await readability_fn(ctx, output_str, command_name="readable_text")
 

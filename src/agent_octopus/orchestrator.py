@@ -32,14 +32,18 @@ Key Responsibilities:
 3. HANDOFF:
    - When a request or command requires action with tools or data, use the `delegate_to_specialist` tool.
    - Map commands to specialists:
-     * $$add_research, $$god_save_research -> research_notes
+     * $$add_research, $$god_save_research, saving research notes, and NoteKing note persistence -> ALWAYS research_notes
      * $$readable_text, $$readable_summary -> readability
      * $$content_prompt -> content_productivity
      * $$leads_get, $$leads_in_progress, $$leads_merge -> leads_crm
-     * $$god_find -> mythology_knowledge
+     * $$god_find, mythology queries, and Syncretica analytical/planning operations (counterparts, clustering, snapshots, reports, monographs) -> mythology_knowledge
      * Domain requests (science manifolds, novel architecture, OSINT, songbooks) -> astronomer, biologist, chemist, physicist, statesman, book_rhino, macronx, evox
+   - CRITICAL ROUTING RULE FOR RESEARCH PERSISTENCE:
+     * Step 6 of recommended actions ("Research Persistence: $$god_save_research") or ANY request to save research, notes, or findings into NoteKing or the Research project MUST ALWAYS be delegated to `research_notes`, NEVER to `mythology_knowledge`.
+     * The `mythology_knowledge` specialist ONLY connects to Syncretica and CANNOT interact with NoteKing or save notes.
+     * When delegating research saving to `research_notes`, always provide the deity name, context, and key findings/myths/counterparts from the session in `task` and `context_summary` so `research_notes` has the complete information to synthesize and save.
    - Meta commands ($$commands, $$help) can be answered directly using the `get_command_help` or `list_commands` tools.
-   - When the specialist returns its result, synthesize and present it clearly to the user.
+   - When the specialist returns its result, present the specialist's output directly and fully to the user. Always preserve all sections, tables, and action choices (especially 'Recommended Next Steps & Actions') in full without omitting, truncating, or summarizing them away.
 """
 
 
@@ -77,16 +81,42 @@ def create_orchestrator_agent(model: Any = None) -> Agent[SessionContext, str]:
         Delegate a task or command execution to one of the 13 specialist sub-agents.
         The specialist will be spun up with its required MCP servers and report back results.
         """
+        clean_cmd = command_name.strip().removeprefix("$$") if command_name else None
+        orig_specialist = specialist
+
+        # Safeguard: Ensure NoteKing research persistence is always routed to research_notes
+        is_persistence_cmd = clean_cmd in ("god_save_research", "add_research")
+        is_persistence_task = (
+            ("save" in task.lower() or "persist" in task.lower())
+            and ("research" in task.lower() or "note" in task.lower() or "noteking" in task.lower())
+        )
+        if is_persistence_cmd or (orig_specialist == "mythology_knowledge" and is_persistence_task):
+            if specialist != "research_notes":
+                ctx.deps.console.print(
+                    f"[dim]Routing research persistence request to 'research_notes' specialist (was {orig_specialist}).[/dim]"
+                )
+                specialist = "research_notes"
+            if not clean_cmd:
+                clean_cmd = "god_save_research" if (
+                    orig_specialist == "mythology_knowledge"
+                    or "god" in task.lower()
+                    or "myth" in task.lower()
+                    or "deity" in task.lower()
+                ) else "add_research"
+
         ctx.deps.console.print(
             f"[bold magenta]⚡ Orchestrator delegating to specialist: [green]{specialist}[/green][/bold magenta]"
         )
         req = HandoffRequest(
             specialist=specialist,
             task=task,
-            command_name=command_name,
+            command_name=clean_cmd,
             context_summary=context_summary,
         )
-        result: HandoffResult = await execute_specialist_handoff(ctx, req)
-        return f"Specialist [{result.specialist}] completed execution:\n\n{result.output}"
+        try:
+            result: HandoffResult = await execute_specialist_handoff(ctx, req)
+            return f"Specialist [{result.specialist}] completed execution:\n\n{result.output}"
+        except Exception as e:
+            return f"Specialist [{specialist}] failed with error: {e}"
 
     return agent
