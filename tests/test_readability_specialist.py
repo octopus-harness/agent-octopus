@@ -17,8 +17,8 @@ def test_readability_specialist_definition():
     assert "readability" in SPECIALISTS
     spec = SPECIALISTS["readability"]
     assert spec.name == "readability"
-    assert "memorable" in spec.mcp_servers
-    assert "noteking" in spec.mcp_servers
+    assert spec.mcp_servers == ["memorable"]
+    assert "noteking" not in spec.mcp_servers
     assert "writing rulesets" in spec.system_prompt.lower() or "readability" in spec.system_prompt.lower()
 
 

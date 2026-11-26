@@ -52,7 +52,7 @@ def test_mcp_config_loading():
 def test_specialists_mapping():
     assert len(SPECIALISTS) == 13
     assert "readability" in SPECIALISTS
-    assert SPECIALISTS["readability"].mcp_servers == ["memorable", "noteking"]
+    assert SPECIALISTS["readability"].mcp_servers == ["memorable"]
     mcp_defs = load_mcp_config("mcp_config.json")
 
     for spec_name, spec in SPECIALISTS.items():
