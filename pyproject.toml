@@ -1,6 +1,6 @@
 [project]
 name = "agent-octopus"
-version = "0.1.0"
+version = "0.9.0"
 description = "Multi-agent CLI harness with Pydantic AI and MCP delegation"
 readme = "README.md"
 requires-python = ">=3.12"
