@@ -119,6 +119,59 @@ def sanitize_mcp_tool_result(result: Any, max_chars: int = MAX_TOOL_OUTPUT_CHARS
     return result
 
 
+NON_NUMERIC_KEYS = {
+    "title",
+    "name",
+    "body",
+    "description",
+    "prompt",
+    "text",
+    "summary",
+    "query",
+    "q",
+    "task",
+    "content",
+    "message",
+    "email",
+    "url",
+    "target_type",
+}
+
+
+def coerce_mcp_tool_args(tool_args: dict[str, Any]) -> dict[str, Any]:
+    """
+    Coerces stringified numbers and booleans into native types for MCP tools.
+    MCP servers (e.g. Node/FastMCP with Zod) strictly reject string types for integer schemas,
+    causing validation errors when LLMs serialize numbers as strings (e.g. project_id="3").
+    """
+    if not isinstance(tool_args, dict):
+        return tool_args
+    cleaned = dict(tool_args)
+    for k, v in cleaned.items():
+        if k in NON_NUMERIC_KEYS:
+            continue
+        if isinstance(v, str):
+            stripped = v.strip()
+            # Coerce integers for ID/count/level/limit parameters
+            if (
+                k.endswith("_id")
+                or k in ("id", "level", "limit", "batch_size", "pinned_position", "count", "size")
+            ) and (
+                stripped.isdigit() or (stripped.startswith("-") and stripped[1:].isdigit())
+            ):
+                try:
+                    cleaned[k] = int(stripped)
+                except ValueError:
+                    pass
+            # Coerce booleans
+            elif k in ("pinned", "full_coverage", "render_markdown", "enabled", "active"):
+                if stripped.lower() == "true":
+                    cleaned[k] = True
+                elif stripped.lower() == "false":
+                    cleaned[k] = False
+    return cleaned
+
+
 async def process_mcp_tool_call(
     ctx: RunContext[Any],
     call_tool: CallToolFunc,
@@ -126,10 +179,11 @@ async def process_mcp_tool_call(
     tool_args: dict[str, Any],
 ) -> Any:
     """
-    Intercepts MCP tool calls to bound responses and summarize high-cardinality payloads,
-    preventing ModelContextWindowExceededError.
+    Intercepts MCP tool calls to coerce argument types, bound responses, and summarize
+    high-cardinality payloads, preventing validation and context window errors.
     """
-    raw_result = await call_tool(name, tool_args)
+    coerced_args = coerce_mcp_tool_args(tool_args)
+    raw_result = await call_tool(name, coerced_args)
     if name == "compute_clusters" and isinstance(raw_result, dict):
         return summarize_clusters_result(raw_result.get("data", raw_result))
     return sanitize_mcp_tool_result(raw_result)

@@ -11,6 +11,7 @@ from agent_octopus.mcp_loader import (
     create_toolset_for_server,
     summarize_clusters_result,
     sanitize_mcp_tool_result,
+    coerce_mcp_tool_args,
     process_mcp_tool_call,
     MAX_TOOL_OUTPUT_CHARS,
 )
@@ -149,10 +150,39 @@ async def test_process_mcp_tool_call():
     }
     mock_call_tool.return_value = fake_cluster_data
 
-    result = await process_mcp_tool_call(mock_ctx, mock_call_tool, "compute_clusters", {"level": 6})
+    # Test that level="6" is coerced to integer 6
+    result = await process_mcp_tool_call(mock_ctx, mock_call_tool, "compute_clusters", {"level": "6"})
     mock_call_tool.assert_awaited_once_with("compute_clusters", {"level": 6})
     assert result["top_clusters"][0]["name"] == "War Domain"
     assert result["sample_singletons"] == ["Hermes"]
+
+
+def test_coerce_mcp_tool_args():
+    # 1. noteking_create_note arguments
+    raw_args = {
+        "project_id": "3",
+        "title": "123",
+        "body": "456",
+        "pinned": "true",
+        "pinned_position": "1",
+    }
+    coerced = coerce_mcp_tool_args(raw_args)
+    assert coerced["project_id"] == 3
+    assert isinstance(coerced["project_id"], int)
+    assert coerced["pinned"] is True
+    assert coerced["pinned_position"] == 1
+    # title and body must stay strings even if numeric
+    assert coerced["title"] == "123"
+    assert isinstance(coerced["title"], str)
+    assert coerced["body"] == "456"
+    assert isinstance(coerced["body"], str)
+
+    # 2. memorable_get_memory arguments
+    mem_args = {"id": "5", "render_markdown": "false"}
+    coerced_mem = coerce_mcp_tool_args(mem_args)
+    assert coerced_mem["id"] == 5
+    assert isinstance(coerced_mem["id"], int)
+    assert coerced_mem["render_markdown"] is False
 
 
 def test_create_toolset_for_server_registers_process_tool_call():

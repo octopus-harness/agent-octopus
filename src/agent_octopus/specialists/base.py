@@ -170,6 +170,7 @@ async def execute_specialist_handoff(
             deps_type=SessionContext,
             toolsets=toolsets,
             system_prompt=extra_instructions,
+            retries=3,
         )
 
         # Register interactive question tool
