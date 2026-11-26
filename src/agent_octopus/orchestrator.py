@@ -86,7 +86,10 @@ def create_orchestrator_agent(model: Any = None) -> Agent[SessionContext, str]:
             command_name=command_name,
             context_summary=context_summary,
         )
-        result: HandoffResult = await execute_specialist_handoff(ctx, req)
-        return f"Specialist [{result.specialist}] completed execution:\n\n{result.output}"
+        try:
+            result: HandoffResult = await execute_specialist_handoff(ctx, req)
+            return f"Specialist [{result.specialist}] completed execution:\n\n{result.output}"
+        except Exception as e:
+            return f"Specialist [{specialist}] failed with error: {e}"
 
     return agent

@@ -6,6 +6,7 @@ from typing import Any
 from rich.panel import Panel
 
 from pydantic_ai import Agent, RunContext
+from pydantic_ai.exceptions import ModelContextWindowExceededError
 from agent_octopus.config import get_model
 from agent_octopus.models import (
     SpecialistName,
@@ -186,12 +187,40 @@ async def execute_specialist_handoff(
         )
 
         history = session.specialist_histories.get(request.specialist, [])
-        with console.status(f"[bold cyan]Specialist '{request.specialist}' working...[/bold cyan]"):
-            result = await specialist_agent.run(
-                prompt_text,
-                deps=session,
-                message_history=history,
+        try:
+            with console.status(f"[bold cyan]Specialist '{request.specialist}' working...[/bold cyan]"):
+                result = await specialist_agent.run(
+                    prompt_text,
+                    deps=session,
+                    message_history=history,
+                )
+        except ModelContextWindowExceededError as e:
+            console.print(f"[bold red]Specialist '{request.specialist}' exceeded context window: {e}[/bold red]")
+            error_output = (
+                f"Specialist [{request.specialist}] was unable to complete the request because the "
+                f"context window limit was exceeded: {e}.\n\n"
+                "The tool output or conversation history exceeded the model's capacity. "
+                "Please refine the query with more specific filters or parameters."
             )
+            handoff_res = HandoffResult(
+                specialist=request.specialist,
+                command_name=request.command_name,
+                summary=f"Context window exceeded for {request.specialist}",
+                output=error_output,
+            )
+            session.shared_ledger.append(handoff_res)
+            return handoff_res
+        except Exception as e:
+            console.print(f"[bold red]Specialist '{request.specialist}' failed: {e}[/bold red]")
+            error_output = f"Specialist [{request.specialist}] encountered an error during execution: {e}"
+            handoff_res = HandoffResult(
+                specialist=request.specialist,
+                command_name=request.command_name,
+                summary=f"Execution error for {request.specialist}",
+                output=error_output,
+            )
+            session.shared_ledger.append(handoff_res)
+            return handoff_res
 
         # Update specialist's history
         session.specialist_histories[request.specialist] = result.all_messages()
