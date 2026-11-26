@@ -7,7 +7,7 @@ from rich.panel import Panel
 
 from pydantic_ai import Agent, RunContext
 from pydantic_ai.exceptions import ModelContextWindowExceededError
-from agent_octopus.config import get_model
+from agent_octopus.config import get_model, Settings
 from agent_octopus.models import (
     SpecialistName,
     SessionContext,
@@ -26,6 +26,14 @@ class SpecialistDefinition:
     mcp_servers: list[str]
     system_prompt: str
     apply_readability_pass: bool = False
+
+
+def render_specialist_system_prompt(raw_prompt: str, settings: Settings) -> str:
+    """
+    Safely interpolates environment-driven placeholders into specialist prompts.
+    """
+    syncretica_web_url = settings.syncretica_web_url.rstrip("/")
+    return raw_prompt.replace("{syncretica_web_url}", syncretica_web_url)
 
 
 def _get_specialists_module():
@@ -141,8 +149,9 @@ async def execute_specialist_handoff(
             out_preview = entry.output[:5000] + ("..." if len(entry.output) > 5000 else "")
             recent_ledger += f"[{entry.specialist}]: {entry.summary}\n{out_preview}\n"
 
+    system_prompt = render_specialist_system_prompt(spec.system_prompt, session.settings)
     extra_instructions = (
-        f"{spec.system_prompt}\n"
+        f"{system_prompt}\n"
         f"{runbook_context}"
         f"{recent_ledger}\n"
     )

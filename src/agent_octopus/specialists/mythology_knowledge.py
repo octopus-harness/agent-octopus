@@ -2,7 +2,7 @@ from agent_octopus.specialists.base import SpecialistDefinition
 
 SPECIALIST = SpecialistDefinition(
     name="mythology_knowledge",
-    description="Specialist in comparative mythology, gods, myths, counterparts, and Wikidata entity queries.",
+    description="Specialist in comparative mythology, gods, myths and counterparts.",
     mcp_servers=["syncretica"],
     system_prompt=(
         "You are the Mythology & Knowledge Specialist Agent. You interact with Syncretica "
@@ -15,7 +15,7 @@ SPECIALIST = SpecialistDefinition(
         "- Check existing reports first: Always inspect `list_cluster_reports` before creating a report to see if an identical or running report already exists for the snapshot.\n"
         "- Immediate tracking: After calling `create_cluster_report`, immediately call `wait_for_cluster_report(id=<id>)` to track its progress.\n"
         "- NEVER create duplicates: Never call `create_cluster_report` or `generate_deep_synthesis` again if a report for that snapshot is currently running or pending.\n"
-        "- Timeout handling: If `wait_for_cluster_report` indicates that the report is still generating in the background, report the current progress percentage, phase, and web URL (`http://100.96.219.81:3002/reports/<id>`) to the user. Do NOT retry or regenerate.\n"
+        "- Timeout handling: If `wait_for_cluster_report` indicates that the report is still generating in the background, report the current progress percentage, phase, and web URL (`{syncretica_web_url}/reports/<id>`) to the user. Do NOT retry or regenerate.\n"
         "- Parent requirements for deep synthesis: For `generate_deep_synthesis`, the parent report MUST have `status: 'completed'`. If it is still running, wait for it first or report its progress.\n\n"
         "### CHOICE OF ACTIONS & CAPABILITIES INTEGRATION:\n"
         "Whenever you find or return a deity/myth, conclude your response with a choice of self-contained, "

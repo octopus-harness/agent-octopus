@@ -5,7 +5,7 @@ from rich.console import Console
 
 from pydantic_ai.exceptions import ModelContextWindowExceededError
 from agent_octopus.models import SessionContext, HandoffRequest
-from agent_octopus.config import load_settings, MCPServerDefinition
+from agent_octopus.config import load_settings, MCPServerDefinition, Settings
 from agent_octopus.mcp_loader import (
     load_mcp_config,
     create_toolset_for_server,
@@ -16,7 +16,11 @@ from agent_octopus.mcp_loader import (
     process_mcp_tool_call,
     MAX_TOOL_OUTPUT_CHARS,
 )
-from agent_octopus.specialists import SPECIALISTS, execute_specialist_handoff
+from agent_octopus.specialists import (
+    SPECIALISTS,
+    execute_specialist_handoff,
+    render_specialist_system_prompt,
+)
 from agent_octopus.orchestrator import create_orchestrator_agent
 
 
@@ -68,6 +72,21 @@ def test_mythology_knowledge_planning_prompt():
     assert "wait_for_cluster_report" in mythology_spec.system_prompt
     assert "NEVER create duplicates" in mythology_spec.system_prompt
     assert mythology_spec.apply_readability_pass is True
+    # Verify no raw URLs are hardcoded in the raw prompt template
+    assert "{syncretica_web_url}/reports/<id>" in mythology_spec.system_prompt
+    assert "http://" not in mythology_spec.system_prompt
+    assert "https://" not in mythology_spec.system_prompt
+
+    # Verify dynamic interpolation
+    settings = load_settings()
+    rendered = render_specialist_system_prompt(mythology_spec.system_prompt, settings)
+    assert "{syncretica_web_url}" not in rendered
+    assert f"{settings.syncretica_web_url.rstrip('/')}/reports/<id>" in rendered
+
+    # Verify trailing slash stripping in settings
+    custom_settings = Settings(SYNCRETICA_WEB_URL="http://test-server:3002/")
+    custom_rendered = render_specialist_system_prompt(mythology_spec.system_prompt, custom_settings)
+    assert "http://test-server:3002/reports/<id>" in custom_rendered
 
 
 def test_summarize_report_result():
