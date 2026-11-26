@@ -37,6 +37,26 @@ class Settings(BaseSettings):
         default="http://localhost:3002",
         alias="SYNCRETICA_WEB_URL",
     )
+    statesman_web_url: str = Field(
+        default="http://localhost:3003",
+        alias="STATESMAN_WEB_URL",
+    )
+    astronomer_web_url: str = Field(
+        default="http://localhost:3004",
+        alias="ASTRONOMER_WEB_URL",
+    )
+    biologist_web_url: str = Field(
+        default="http://localhost:3005",
+        alias="BIOLOGIST_WEB_URL",
+    )
+    chemist_web_url: str = Field(
+        default="http://localhost:3006",
+        alias="CHEMIST_WEB_URL",
+    )
+    physicist_web_url: str = Field(
+        default="http://localhost:3007",
+        alias="PHYSICIST_WEB_URL",
+    )
 
 
 class MCPServerDefinition(BaseModel):

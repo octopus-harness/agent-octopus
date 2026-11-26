@@ -38,15 +38,26 @@ def summarize_clusters_result(
                 m.get("name", m.get("title", str(m))) if isinstance(m, dict) else str(m)
                 for m in members[:max_members_per_cluster]
             ]
-            summarized_clusters.append({
+            cluster_entry = {
                 "id": c.get("id"),
                 "name": c.get("name"),
                 "size": c.get("size", len(members)),
-                "shared_themes": c.get("shared_themes", []),
-                "pantheons": c.get("pantheons", []),
                 "sample_members": sample_members,
                 "total_members": len(members),
-            })
+            }
+            # Dynamically copy any non-members metadata fields present in raw cluster
+            # (e.g. shared_themes, pantheons, cosmic_structures, biomes, chemical_classes, particle_groups, continents)
+            for k, v in c.items():
+                if k not in (
+                    "id",
+                    "name",
+                    "size",
+                    "members",
+                    "sample_members",
+                    "total_members",
+                ):
+                    cluster_entry[k] = v
+            summarized_clusters.append(cluster_entry)
         else:
             summarized_clusters.append(c)
 
@@ -218,7 +229,7 @@ def coerce_mcp_tool_args(tool_args: dict[str, Any]) -> dict[str, Any]:
                 except ValueError:
                     pass
             # Coerce booleans
-            elif k in ("pinned", "full_coverage", "render_markdown", "enabled", "active"):
+            elif k in ("pinned", "full_coverage", "render_markdown", "enabled", "active", "force") or k.startswith("include_"):
                 if stripped.lower() == "true":
                     cleaned[k] = True
                 elif stripped.lower() == "false":

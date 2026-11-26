@@ -294,5 +294,68 @@ Operational Next Steps
     assert options[5].tool_name == "$$god_save_research"
 
 
+def test_extract_plan_options_cinderblock_domains():
+    text = """
+### Recommended Next Steps & Actions
+
+1. **Astrophysical Counterparts**: `find_counterparts(entity_type='star_system', id=14, limit=10)` — Explore nearest vector neighbors across cosmic structures.
+2. **Inspect Star System Profile**: `get_star_system(id=14, include_celestial_bodies=true)` — Retrieve full orbital and planet parameters.
+3. **Inspect Organism Profile**: `get_organism(id=22)` — Retrieve ecological niche details.
+4. **Inspect Molecule Profile**: `get_molecule(id=88, include_functional_groups=true)` — Retrieve chemical structure details.
+5. **Inspect Particle Profile**: `get_subatomic_particle(id=7, include_quantum_states=true)` — Retrieve quantum state details.
+6. **Inspect Country Profile**: `get_country(id=3, include_cities=true)` — Retrieve geopolitical profile.
+7. **Save Astronomy Research**: `$$astronomer_save_research` — Archive star system findings to NoteKing.
+8. **Save Biology Research**: `$$biologist_save_research` — Archive species findings to NoteKing.
+9. **Save Chemistry Research**: `$$chemist_save_research` — Archive molecule findings to NoteKing.
+10. **Save Physics Research**: `$$physicist_save_research` — Archive particle findings to NoteKing.
+11. **Save Geopolitics Research**: `$$statesman_save_research` — Archive country findings to NoteKing.
+"""
+    options = extract_plan_options(text)
+    assert len(options) == 11
+    assert options[0].tool_name == "find_counterparts"
+    assert options[1].tool_name == "get_star_system"
+    assert options[2].tool_name == "get_organism"
+    assert options[3].tool_name == "get_molecule"
+    assert options[4].tool_name == "get_subatomic_particle"
+    assert options[5].tool_name == "get_country"
+    assert options[6].tool_name == "$$astronomer_save_research"
+    assert options[7].tool_name == "$$biologist_save_research"
+    assert options[8].tool_name == "$$chemist_save_research"
+    assert options[9].tool_name == "$$physicist_save_research"
+    assert options[10].tool_name == "$$statesman_save_research"
+
+
+def test_known_cinderblock_tools_export_and_compatibility():
+    from agent_octopus.plan_parser import (
+        KNOWN_CINDERBLOCK_TOOLS,
+        KNOWN_SYNCRETICA_TOOLS,
+        COMMON_CINDERBLOCK_TOOLS,
+        SYNCRETICA_TOOLS,
+        ASTRONOMER_TOOLS,
+        BIOLOGIST_TOOLS,
+        CHEMIST_TOOLS,
+        PHYSICIST_TOOLS,
+        STATESMAN_TOOLS,
+        RESEARCH_PERSISTENCE_COMMANDS,
+    )
+
+    # Verify alias identity
+    assert KNOWN_SYNCRETICA_TOOLS is KNOWN_CINDERBLOCK_TOOLS
+
+    # Verify all domain modular sets are present
+    assert "compute_clusters" in COMMON_CINDERBLOCK_TOOLS
+    assert "list_gods" in SYNCRETICA_TOOLS
+    assert "list_star_systems" in ASTRONOMER_TOOLS
+    assert "list_species" in BIOLOGIST_TOOLS
+    assert "list_molecules" in CHEMIST_TOOLS
+    assert "list_subatomic_particles" in PHYSICIST_TOOLS
+    assert "list_countries" in STATESMAN_TOOLS
+    assert "$$astronomer_save_research" in RESEARCH_PERSISTENCE_COMMANDS
+
+    # Verify sorted by length descending
+    for i in range(len(KNOWN_CINDERBLOCK_TOOLS) - 1):
+        assert len(KNOWN_CINDERBLOCK_TOOLS[i]) >= len(KNOWN_CINDERBLOCK_TOOLS[i + 1])
+
+
 
 

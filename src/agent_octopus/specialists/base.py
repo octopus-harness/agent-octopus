@@ -32,8 +32,18 @@ def render_specialist_system_prompt(raw_prompt: str, settings: Settings) -> str:
     """
     Safely interpolates environment-driven placeholders into specialist prompts.
     """
-    syncretica_web_url = settings.syncretica_web_url.rstrip("/")
-    return raw_prompt.replace("{syncretica_web_url}", syncretica_web_url)
+    replacements = {
+        "{syncretica_web_url}": settings.syncretica_web_url.rstrip("/"),
+        "{statesman_web_url}": settings.statesman_web_url.rstrip("/"),
+        "{astronomer_web_url}": settings.astronomer_web_url.rstrip("/"),
+        "{biologist_web_url}": settings.biologist_web_url.rstrip("/"),
+        "{chemist_web_url}": settings.chemist_web_url.rstrip("/"),
+        "{physicist_web_url}": settings.physicist_web_url.rstrip("/"),
+    }
+    rendered = raw_prompt
+    for placeholder, value in replacements.items():
+        rendered = rendered.replace(placeholder, value)
+    return rendered
 
 
 def _get_specialists_module():

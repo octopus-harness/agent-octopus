@@ -12,7 +12,8 @@ class PlanOption:
     raw_text: str = ""
 
 
-KNOWN_SYNCRETICA_TOOLS = sorted([
+# Core tools shared across all 6 Cinderblock platforms (including Syncretica)
+CORE_CINDERBLOCK_TOOLS = [
     "compute_clusters",
     "create_cluster_snapshot",
     "list_cluster_snapshots",
@@ -28,6 +29,28 @@ KNOWN_SYNCRETICA_TOOLS = sorted([
     "get_report_sub_report",
     "find_counterparts",
     "search",
+    "list_jobs",
+    "get_job_status",
+    "wait_for_job",
+    "get_platform_status",
+    "get_settings",
+    "update_context_window",
+    "trigger_bulk_embeddings",
+    "get_openapi_spec",
+]
+
+# Extended cluster reporting tools available on Astronomer, Biologist, Chemist, Physicist, and Statesman
+EXTENDED_CLUSTER_REPORT_TOOLS = [
+    "delete_cluster_report",
+    "list_report_sub_reports",
+    "list_cluster_groups",
+    "list_report_summaries",
+]
+
+COMMON_CINDERBLOCK_TOOLS = CORE_CINDERBLOCK_TOOLS + EXTENDED_CLUSTER_REPORT_TOOLS
+
+# Syncretica (Mythology)
+SYNCRETICA_TOOLS = [
     "list_gods",
     "get_god",
     "create_god",
@@ -52,19 +75,200 @@ KNOWN_SYNCRETICA_TOOLS = sorted([
     "upsert_pantheons_batch",
     "populate_pantheons",
     "populate_pantheon_gods",
-    "list_jobs",
-    "get_job_status",
-    "wait_for_job",
-    "get_platform_status",
-    "get_settings",
-    "update_context_window",
-    "trigger_bulk_embeddings",
-    "get_openapi_spec",
+]
+
+# Astronomer
+ASTRONOMER_TOOLS = [
+    "list_cosmic_structures",
+    "get_cosmic_structure",
+    "create_cosmic_structure",
+    "update_cosmic_structure",
+    "delete_cosmic_structure",
+    "upsert_cosmic_structures_batch",
+    "populate_cosmic_structures",
+    "populate_cosmic_structure_star_systems",
+    "list_star_systems",
+    "get_star_system",
+    "create_star_system",
+    "update_star_system",
+    "delete_star_system",
+    "upsert_star_systems_batch",
+    "generate_star_system_embedding",
+    "populate_star_system_celestial_bodies",
+    "populate_star_systems_bulk",
+    "list_celestial_bodies",
+    "get_celestial_body",
+    "create_celestial_body",
+    "update_celestial_body",
+    "delete_celestial_body",
+    "upsert_celestial_bodies_batch",
+    "generate_celestial_body_embedding",
+    "populate_celestial_bodies_bulk",
+]
+
+# Biologist
+BIOLOGIST_TOOLS = [
+    "list_biomes",
+    "get_biome",
+    "create_biome",
+    "update_biome",
+    "delete_biome",
+    "upsert_biomes_batch",
+    "populate_biomes",
+    "populate_biome_species",
+    "list_species",
+    "get_species",
+    "create_species",
+    "update_species",
+    "delete_species",
+    "upsert_species_batch",
+    "generate_species_embedding",
+    "populate_species_organisms",
+    "populate_species_bulk",
+    "list_organisms",
+    "get_organism",
+    "create_organism",
+    "update_organism",
+    "delete_organism",
+    "upsert_organisms_batch",
+    "generate_organism_embedding",
+    "populate_organisms_bulk",
+]
+
+# Chemist
+CHEMIST_TOOLS = [
+    "list_chemical_classes",
+    "get_chemical_class",
+    "create_chemical_class",
+    "update_chemical_class",
+    "delete_chemical_class",
+    "upsert_chemical_classes_batch",
+    "populate_chemical_classes",
+    "populate_chemical_class_molecules",
+    "list_molecules",
+    "get_molecule",
+    "create_molecule",
+    "update_molecule",
+    "delete_molecule",
+    "upsert_molecules_batch",
+    "generate_molecule_embedding",
+    "populate_molecule_functional_groups",
+    "populate_molecules_bulk",
+    "list_functional_groups",
+    "get_functional_group",
+    "create_functional_group",
+    "update_functional_group",
+    "delete_functional_group",
+    "upsert_functional_groups_batch",
+    "generate_functional_group_embedding",
+    "populate_functional_groups_bulk",
+]
+
+# Physicist
+PHYSICIST_TOOLS = [
+    "list_particle_groups",
+    "get_particle_group",
+    "create_particle_group",
+    "update_particle_group",
+    "delete_particle_group",
+    "upsert_particle_groups_batch",
+    "populate_particle_groups",
+    "populate_particle_group_subatomic_particles",
+    "list_subatomic_particles",
+    "get_subatomic_particle",
+    "create_subatomic_particle",
+    "update_subatomic_particle",
+    "delete_subatomic_particle",
+    "upsert_subatomic_particles_batch",
+    "generate_subatomic_particle_embedding",
+    "populate_subatomic_particle_quantum_states",
+    "populate_subatomic_particles_bulk",
+    "list_quantum_states",
+    "get_quantum_state",
+    "create_quantum_state",
+    "update_quantum_state",
+    "delete_quantum_state",
+    "upsert_quantum_states_batch",
+    "generate_quantum_state_embedding",
+    "populate_quantum_states_bulk",
+]
+
+# Statesman
+STATESMAN_TOOLS = [
+    "list_continents",
+    "get_continent",
+    "create_continent",
+    "update_continent",
+    "delete_continent",
+    "upsert_continents_batch",
+    "populate_continents",
+    "populate_continent_countries",
+    "list_countries",
+    "get_country",
+    "create_country",
+    "update_country",
+    "delete_country",
+    "upsert_countries_batch",
+    "generate_country_embedding",
+    "populate_country_cities",
+    "populate_countries_bulk",
+    "list_cities",
+    "get_city",
+    "create_city",
+    "update_city",
+    "delete_city",
+    "upsert_cities_batch",
+    "generate_city_embedding",
+    "populate_cities_bulk",
+]
+
+# Research Persistence Commands
+RESEARCH_PERSISTENCE_COMMANDS = [
     "$$god_save_research",
     "god_save_research",
+    "$$astronomer_save_research",
+    "astronomer_save_research",
+    "$$biologist_save_research",
+    "biologist_save_research",
+    "$$chemist_save_research",
+    "chemist_save_research",
+    "$$physicist_save_research",
+    "physicist_save_research",
+    "$$statesman_save_research",
+    "statesman_save_research",
     "$$add_research",
     "add_research",
-], key=len, reverse=True)
+]
+
+KNOWN_CINDERBLOCK_TOOLS = sorted(
+    list(
+        set(
+            COMMON_CINDERBLOCK_TOOLS
+            + SYNCRETICA_TOOLS
+            + ASTRONOMER_TOOLS
+            + BIOLOGIST_TOOLS
+            + CHEMIST_TOOLS
+            + PHYSICIST_TOOLS
+            + STATESMAN_TOOLS
+            + RESEARCH_PERSISTENCE_COMMANDS
+        )
+    ),
+    key=len,
+    reverse=True,
+)
+
+# Backward-compatibility alias
+KNOWN_SYNCRETICA_TOOLS = KNOWN_CINDERBLOCK_TOOLS
+
+# Explicit domain-to-MCP tool mappings matching each platform's MCP server capabilities
+CINDERBLOCK_DOMAIN_TOOLS: dict[str, list[str]] = {
+    "syncretica": CORE_CINDERBLOCK_TOOLS + SYNCRETICA_TOOLS,
+    "astronomer": COMMON_CINDERBLOCK_TOOLS + ASTRONOMER_TOOLS,
+    "biologist": COMMON_CINDERBLOCK_TOOLS + BIOLOGIST_TOOLS,
+    "chemist": COMMON_CINDERBLOCK_TOOLS + CHEMIST_TOOLS,
+    "physicist": COMMON_CINDERBLOCK_TOOLS + PHYSICIST_TOOLS,
+    "statesman": COMMON_CINDERBLOCK_TOOLS + STATESMAN_TOOLS,
+}
 
 
 def extract_plan_options(text: str) -> list[PlanOption]:
@@ -153,7 +357,7 @@ def extract_plan_options(text: str) -> list[PlanOption]:
         if tool_line_match:
             raw_tool = tool_line_match.group(1).strip()
             tool_matches = []
-            for known in KNOWN_SYNCRETICA_TOOLS:
+            for known in KNOWN_CINDERBLOCK_TOOLS:
                 pattern = rf"(?:`|\b|^|(?<=[\s])){re.escape(known)}(?:`|\b|$|(?=[\s:,]))"
                 tm = re.search(pattern, raw_tool)
                 if tm:
@@ -169,7 +373,7 @@ def extract_plan_options(text: str) -> list[PlanOption]:
         else:
             # Check for known tools in the body (prefer earliest occurrence in body)
             tool_matches = []
-            for known in KNOWN_SYNCRETICA_TOOLS:
+            for known in KNOWN_CINDERBLOCK_TOOLS:
                 pattern = rf"(?:`|\b|^|(?<=[\s])){re.escape(known)}(?:`|\b|$|(?=[\s:,]))"
                 tm = re.search(pattern, item_body)
                 if tm:
@@ -193,7 +397,7 @@ def extract_plan_options(text: str) -> list[PlanOption]:
 
         # Fallback check in title itself
         if not tool_name:
-            for known in KNOWN_SYNCRETICA_TOOLS:
+            for known in KNOWN_CINDERBLOCK_TOOLS:
                 if known.lower() in title.lower():
                     tool_name = known
                     break
