@@ -18,7 +18,7 @@ from agent_octopus.com_cli import run_com_list, category_sort_key
 from agent_octopus.orchestrator import create_orchestrator_agent
 from agent_octopus.observability import setup_observability
 from agent_octopus.plan_parser import extract_plan_options, PlanOption
-from agent_octopus.tools import prompt_with_plan_selector
+from agent_octopus.tools import prompt_with_plan_selector, track_status
 
 
 CATEGORY_HEADER_STYLE: str = "bold magenta"
@@ -209,7 +209,7 @@ async def async_main():
 
     message_history = []
 
-    with console.status("[bold green]Loading commands and preparing agent menu...[/bold green]"):
+    with track_status(session, "[bold green]Loading commands and preparing agent menu...[/bold green]"):
         startup_res = await orchestrator.run(
             startup_prompt,
             deps=session,
@@ -223,7 +223,7 @@ async def async_main():
 
     # If single shot execution was requested via -c / --once
     if args.once:
-        with console.status("[bold green]Agent thinking...[/bold green]"):
+        with track_status(session, "[bold green]Agent thinking...[/bold green]"):
             res = await orchestrator.run(
                 args.once,
                 deps=session,
@@ -282,7 +282,7 @@ async def async_main():
         )
 
         try:
-            with console.status("[bold green]Agent thinking...[/bold green]"):
+            with track_status(session, "[bold green]Agent thinking...[/bold green]"):
                 result = await orchestrator.run(
                     user_input,
                     deps=session,

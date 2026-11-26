@@ -63,3 +63,4 @@ class SessionContext:
     commands: list[ComCommand] = field(default_factory=list)
     shared_ledger: list[HandoffResult] = field(default_factory=list)
     specialist_histories: dict[str, list[ModelMessage]] = field(default_factory=dict)
+    active_statuses: list[Any] = field(default_factory=list)
