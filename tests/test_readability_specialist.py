@@ -23,12 +23,22 @@ def test_readability_specialist_definition():
 
 
 def test_readability_enhanced_registry():
-    assert SPECIALISTS["mythology_knowledge"].apply_readability_pass is True
+    cinderblock_specialists = [
+        "mythology_knowledge",
+        "astronomer",
+        "biologist",
+        "chemist",
+        "physicist",
+        "statesman",
+    ]
+    for name in cinderblock_specialists:
+        assert SPECIALISTS[name].apply_readability_pass is True
+        assert name in READABILITY_ENHANCED_SPECIALISTS
+
     assert SPECIALISTS["readability"].apply_readability_pass is False
-    assert SPECIALISTS["astronomer"].apply_readability_pass is False
-    assert "mythology_knowledge" in READABILITY_ENHANCED_SPECIALISTS
+    assert SPECIALISTS["book_rhino"].apply_readability_pass is False
     assert "readability" not in READABILITY_ENHANCED_SPECIALISTS
-    assert "astronomer" not in READABILITY_ENHANCED_SPECIALISTS
+    assert "book_rhino" not in READABILITY_ENHANCED_SPECIALISTS
 
 
 @pytest.mark.asyncio
@@ -130,11 +140,11 @@ async def test_non_registered_specialist_skips_readability():
     mock_ctx.deps = session
 
     req = HandoffRequest(
-        specialist="astronomer",
-        task="Analyze stellar flare in Proxima Centauri",
+        specialist="book_rhino",
+        task="Architect novel world taxonomy",
     )
 
-    raw_output = "Stellar flare analysis complete."
+    raw_output = "Novel taxonomy complete."
 
     mock_run_result = MagicMock()
     mock_run_result.output = raw_output

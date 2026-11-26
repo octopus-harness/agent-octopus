@@ -89,6 +89,100 @@ def test_mythology_knowledge_planning_prompt():
     assert "http://test-server:3002/reports/<id>" in custom_rendered
 
 
+def test_cinderblock_specialists_planning_prompts_and_web_urls():
+    cinderblock_matrix = [
+        (
+            "astronomer",
+            "$$astronomer_find",
+            "$$astronomer_save_research",
+            "{astronomer_web_url}",
+            "ASTRONOMER_WEB_URL",
+            "http://astro-test:3004/",
+            "entity_type='star_system'",
+            "target_type='StarSystem'",
+        ),
+        (
+            "biologist",
+            "$$biologist_find",
+            "$$biologist_save_research",
+            "{biologist_web_url}",
+            "BIOLOGIST_WEB_URL",
+            "http://bio-test:3005/",
+            "entity_type='species'",
+            "target_type='Species'",
+        ),
+        (
+            "chemist",
+            "$$chemist_find",
+            "$$chemist_save_research",
+            "{chemist_web_url}",
+            "CHEMIST_WEB_URL",
+            "http://chem-test:3006/",
+            "entity_type='molecule'",
+            "target_type='Molecule'",
+        ),
+        (
+            "physicist",
+            "$$physicist_find",
+            "$$physicist_save_research",
+            "{physicist_web_url}",
+            "PHYSICIST_WEB_URL",
+            "http://phys-test:3007/",
+            "entity_type='subatomic_particle'",
+            "target_type='SubatomicParticle'",
+        ),
+        (
+            "statesman",
+            "$$statesman_find",
+            "$$statesman_save_research",
+            "{statesman_web_url}",
+            "STATESMAN_WEB_URL",
+            "http://state-test:3003/",
+            "entity_type='country'",
+            "target_type='Country'",
+        ),
+    ]
+
+    default_settings = load_settings()
+
+    for (
+        spec_name,
+        find_cmd,
+        save_cmd,
+        placeholder,
+        env_key,
+        test_url,
+        entity_type_str,
+        target_type_str,
+    ) in cinderblock_matrix:
+        spec = SPECIALISTS[spec_name]
+        assert spec.apply_readability_pass is True
+        assert find_cmd in spec.system_prompt
+        assert save_cmd in spec.system_prompt
+        assert "Recommended Next Steps & Actions" in spec.system_prompt
+        assert "find_counterparts" in spec.system_prompt
+        assert "compute_clusters" in spec.system_prompt
+        assert "create_cluster_snapshot" in spec.system_prompt
+        assert "create_cluster_report" in spec.system_prompt
+        assert "generate_deep_synthesis" in spec.system_prompt
+        assert "wait_for_cluster_report" in spec.system_prompt
+        assert "NEVER create duplicates" in spec.system_prompt
+        assert entity_type_str in spec.system_prompt
+        assert target_type_str in spec.system_prompt
+        assert f"{placeholder}/reports/<id>" in spec.system_prompt
+        assert "http://" not in spec.system_prompt
+        assert "https://" not in spec.system_prompt
+
+        # Default interpolation
+        rendered_default = render_specialist_system_prompt(spec.system_prompt, default_settings)
+        assert placeholder not in rendered_default
+
+        # Custom trailing slash stripping
+        custom_settings = Settings(**{env_key: test_url})
+        rendered_custom = render_specialist_system_prompt(spec.system_prompt, custom_settings)
+        assert f"{test_url.rstrip('/')}/reports/<id>" in rendered_custom
+
+
 def test_summarize_report_result():
     fake_summaries = [
         {"id": i, "cluster_group_id": 100 + i, "cluster_group_name": f"Group {i}", "position": i + 1, "content": "Long analysis " * 100}
@@ -235,6 +329,46 @@ def test_coerce_mcp_tool_args():
     assert isinstance(coerced_mem["id"], int)
     assert coerced_mem["render_markdown"] is False
 
+    # 3. Cinderblock include_* and force boolean flags
+    cb_args = {
+        "id": "42",
+        "include_celestial_bodies": "true",
+        "include_organisms": "false",
+        "include_functional_groups": "true",
+        "include_quantum_states": "false",
+        "include_cities": "true",
+        "force": "true",
+    }
+    coerced_cb = coerce_mcp_tool_args(cb_args)
+    assert coerced_cb["id"] == 42
+    assert coerced_cb["include_celestial_bodies"] is True
+    assert coerced_cb["include_organisms"] is False
+    assert coerced_cb["include_functional_groups"] is True
+    assert coerced_cb["include_quantum_states"] is False
+    assert coerced_cb["include_cities"] is True
+    assert coerced_cb["force"] is True
+
+
+def test_summarize_clusters_result_preserves_cinderblock_domain_keys():
+    raw_data = {
+        "target_type": "StarSystem",
+        "level": 6,
+        "clusters": [
+            {
+                "id": 1,
+                "name": "Red Dwarf Exoplanet Systems",
+                "size": 4,
+                "shared_themes": ["M-Dwarf", "Habitable Zone"],
+                "cosmic_structures": ["Local Bubble", "Solar Neighborhood"],
+                "members": [{"name": "TRAPPIST-1"}, {"name": "Proxima Centauri"}],
+            }
+        ],
+        "singletons": [{"name": "Sirius"}],
+    }
+    summarized = summarize_clusters_result(raw_data)
+    assert summarized["top_clusters"][0]["cosmic_structures"] == ["Local Bubble", "Solar Neighborhood"]
+    assert summarized["top_clusters"][0]["sample_members"] == ["TRAPPIST-1", "Proxima Centauri"]
+
 
 def test_create_toolset_for_server_registers_process_tool_call():
     defn = MCPServerDefinition(command="node", args=["test.js"])
@@ -349,6 +483,41 @@ async def test_delegate_to_specialist_reroutes_research_persistence_to_research_
         req4 = mock_handoff.call_args[0][1]
         assert req4.specialist == "mythology_knowledge"
         assert req4.command_name == "god_find"
+
+        # 5. All 5 new Cinderblock specialists reroute persistence to research_notes with domain command
+        domain_cases = [
+            ("astronomer", "$$astronomer_save_research", "astronomer_save_research", "Save research on TRAPPIST-1 to NoteKing"),
+            ("biologist", "$$biologist_save_research", "biologist_save_research", "Save research on Panthera leo to NoteKing"),
+            ("chemist", "$$chemist_save_research", "chemist_save_research", "Save research on Caffeine to NoteKing"),
+            ("physicist", "$$physicist_save_research", "physicist_save_research", "Save research on Higgs Boson to NoteKing"),
+            ("statesman", "$$statesman_save_research", "statesman_save_research", "Save research on Singapore to NoteKing"),
+        ]
+        expected_calls = 4
+        for orig_spec, cmd_with_prefix, expected_cmd, nl_task in domain_cases:
+            # Explicit command name
+            await delegate_tool.function(
+                mock_ctx,
+                specialist=orig_spec,
+                task=nl_task,
+                command_name=cmd_with_prefix,
+            )
+            expected_calls += 1
+            assert mock_handoff.call_count == expected_calls
+            req_explicit = mock_handoff.call_args[0][1]
+            assert req_explicit.specialist == "research_notes"
+            assert req_explicit.command_name == expected_cmd
+
+            # Natural language persistence task without command_name
+            await delegate_tool.function(
+                mock_ctx,
+                specialist=orig_spec,
+                task=nl_task,
+            )
+            expected_calls += 1
+            assert mock_handoff.call_count == expected_calls
+            req_nl = mock_handoff.call_args[0][1]
+            assert req_nl.specialist == "research_notes"
+            assert req_nl.command_name == expected_cmd
 
 
 @pytest.mark.asyncio
