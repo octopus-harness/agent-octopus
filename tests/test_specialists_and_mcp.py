@@ -10,6 +10,7 @@ from agent_octopus.mcp_loader import (
     load_mcp_config,
     create_toolset_for_server,
     summarize_clusters_result,
+    summarize_report_result,
     sanitize_mcp_tool_result,
     coerce_mcp_tool_args,
     process_mcp_tool_call,
@@ -64,7 +65,38 @@ def test_mythology_knowledge_planning_prompt():
     assert "create_cluster_snapshot" in mythology_spec.system_prompt
     assert "generate_deep_synthesis" in mythology_spec.system_prompt
     assert "$$god_save_research" in mythology_spec.system_prompt
+    assert "wait_for_cluster_report" in mythology_spec.system_prompt
+    assert "NEVER create duplicates" in mythology_spec.system_prompt
     assert mythology_spec.apply_readability_pass is True
+
+
+def test_summarize_report_result():
+    fake_summaries = [
+        {"id": i, "cluster_group_id": 100 + i, "cluster_group_name": f"Group {i}", "position": i + 1, "content": "Long analysis " * 100}
+        for i in range(20)
+    ]
+    report_data = {
+        "id": 8,
+        "cluster_snapshot_id": 7,
+        "title": "Cosmogony Study",
+        "prompt": "Analyze auto-genesis",
+        "status": "completed",
+        "content": "# Full Monograph Content\nDetailed scholarly synthesis...",
+        "summaries": fake_summaries,
+        "summarized_clusters_count": 20,
+        "total_clusters_count": 20,
+    }
+    summarized = summarize_report_result(report_data, max_summaries=5)
+    assert "summaries" not in summarized
+    assert "summaries_sample" in summarized
+    assert len(summarized["summaries_sample"]) == 5
+    assert summarized["total_summaries_count"] == 20
+    assert summarized["content"] == "# Full Monograph Content\nDetailed scholarly synthesis..."
+
+    # When sanitized via sanitize_mcp_tool_result
+    sanitized = sanitize_mcp_tool_result(report_data)
+    assert "summaries_sample" in sanitized
+    assert "summaries" not in sanitized
 
 
 def test_summarize_clusters_result():

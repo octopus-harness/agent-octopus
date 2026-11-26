@@ -16,6 +16,7 @@ KNOWN_SYNCRETICA_TOOLS = [
     "create_cluster_snapshot",
     "create_cluster_report",
     "generate_deep_synthesis",
+    "wait_for_cluster_report",
     "find_counterparts",
     "$$god_save_research",
     "god_save_research",

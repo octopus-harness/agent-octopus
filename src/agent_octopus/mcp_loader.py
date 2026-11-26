@@ -76,18 +76,67 @@ def summarize_clusters_result(
     return summary
 
 
+def summarize_report_result(data: dict[str, Any], max_summaries: int = 5) -> dict[str, Any]:
+    """
+    Summarizes cluster report payloads that contain large arrays of intermediate
+    cluster summaries or batch sub-reports, preserving the monograph content, progress,
+    and metadata while preventing context window overflow.
+    """
+    if not isinstance(data, dict):
+        return data
+
+    cleaned = dict(data)
+    summaries = cleaned.get("summaries")
+    if isinstance(summaries, list) and len(summaries) > max_summaries:
+        cleaned["summaries_sample"] = [
+            {
+                "id": s.get("id"),
+                "cluster_group_id": s.get("cluster_group_id"),
+                "cluster_group_name": s.get("cluster_group_name"),
+                "position": s.get("position"),
+            }
+            if isinstance(s, dict)
+            else s
+            for s in summaries[:max_summaries]
+        ]
+        cleaned["total_summaries_count"] = len(summaries)
+        cleaned.pop("summaries", None)
+
+    sub_reports = cleaned.get("sub_reports")
+    if isinstance(sub_reports, list) and len(sub_reports) > max_summaries:
+        cleaned["sub_reports_sample"] = [
+            {
+                "id": sr.get("id"),
+                "batch_index": sr.get("batch_index"),
+                "cluster_group_ids": sr.get("cluster_group_ids"),
+            }
+            if isinstance(sr, dict)
+            else sr
+            for sr in sub_reports[:max_summaries]
+        ]
+        cleaned["total_sub_reports_count"] = len(sub_reports)
+        cleaned.pop("sub_reports", None)
+
+    return cleaned
+
+
 def sanitize_mcp_tool_result(result: Any, max_chars: int = MAX_TOOL_OUTPUT_CHARS) -> Any:
     """
     Sanitizes and bounds MCP tool outputs to prevent context window overflow.
-    Specifically summarizes cluster payloads and truncates any output exceeding max_chars.
+    Specifically summarizes cluster payloads, report payloads, and truncates any output exceeding max_chars.
     """
-    # 1. Check for clustering results in dict or JSON string
+    # 1. Check for clustering or report results in dict or JSON string
     if isinstance(result, dict):
         if "clusters" in result and "singletons" in result:
             result = summarize_clusters_result(result)
         elif "data" in result and isinstance(result["data"], dict) and "clusters" in result["data"]:
             result = summarize_clusters_result(result["data"])
-    elif isinstance(result, str) and result.strip().startswith("{") and '"clusters"' in result and '"singletons"' in result:
+
+        if "summarized_clusters_count" in result or ("cluster_snapshot_id" in result and "summaries" in result):
+            result = summarize_report_result(result)
+        elif "data" in result and isinstance(result["data"], dict) and ("summarized_clusters_count" in result["data"] or "cluster_snapshot_id" in result["data"]):
+            result = summarize_report_result(result["data"])
+    elif isinstance(result, str) and result.strip().startswith("{"):
         try:
             parsed = json.loads(result)
             if isinstance(parsed, dict):
@@ -95,6 +144,11 @@ def sanitize_mcp_tool_result(result: Any, max_chars: int = MAX_TOOL_OUTPUT_CHARS
                     result = summarize_clusters_result(parsed)
                 elif "data" in parsed and isinstance(parsed["data"], dict) and "clusters" in parsed["data"]:
                     result = summarize_clusters_result(parsed["data"])
+
+                if "summarized_clusters_count" in parsed or ("cluster_snapshot_id" in parsed and "summaries" in parsed):
+                    result = summarize_report_result(parsed)
+                elif "data" in parsed and isinstance(parsed["data"], dict) and ("summarized_clusters_count" in parsed["data"] or "cluster_snapshot_id" in parsed["data"]):
+                    result = summarize_report_result(parsed["data"])
         except Exception:
             pass
 
@@ -155,7 +209,7 @@ def coerce_mcp_tool_args(tool_args: dict[str, Any]) -> dict[str, Any]:
             # Coerce integers for ID/count/level/limit parameters
             if (
                 k.endswith("_id")
-                or k in ("id", "level", "limit", "batch_size", "pinned_position", "count", "size")
+                or k in ("id", "level", "limit", "batch_size", "pinned_position", "count", "size", "timeout_ms", "poll_interval_ms")
             ) and (
                 stripped.isdigit() or (stripped.startswith("-") and stripped[1:].isdigit())
             ):
