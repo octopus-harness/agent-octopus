@@ -72,6 +72,50 @@ def render_grouped_commands_table(commands: list[ComCommand]) -> Table:
     return table
 
 
+def resolve_user_input(
+    user_input: str,
+    plan_options: list[PlanOption],
+    commands: list[ComCommand],
+    console: Console | None = None,
+) -> str:
+    """
+    Resolves user input, mapping index numbers to active plan options (if present)
+    or global session commands (if no plan is active).
+    """
+    parts = user_input.split(maxsplit=1)
+    if not parts or not parts[0].isdigit():
+        return user_input
+
+    idx = int(parts[0])
+    extra_args = parts[1] if len(parts) > 1 else ""
+
+    if plan_options:
+        matched_plan = next((opt for opt in plan_options if opt.index == idx), None)
+        if matched_plan:
+            if console:
+                console.print(f"[dim]Mapped choice #{idx} to {matched_plan.title}[/dim]")
+            choice_text = matched_plan.raw_text or matched_plan.action_text
+            if user_input.strip() == str(idx):
+                return choice_text
+            elif user_input.startswith(choice_text):
+                return user_input
+            else:
+                return f"{choice_text} {extra_args}".strip()
+        # Per grill-me decision: unrecognized numbers pass through directly as free-form text
+        return user_input
+
+    matched_cmd = next((c for c in commands if c.index == idx), None)
+    if matched_cmd:
+        if console:
+            console.print(f"[dim]Mapped choice #{idx} to {matched_cmd.name}[/dim]")
+        return (
+            f"The user selected option {idx} ({matched_cmd.name}). "
+            f"Additional arguments provided by user: '{extra_args}'."
+        )
+
+    return user_input
+
+
 class OctoCommandCompleter(Completer):
     """
     Interactive popup completer for prompt_toolkit.
@@ -208,6 +252,7 @@ async def async_main():
     active_plan_options: list[PlanOption] = []
 
     while True:
+        current_plan_options = list(active_plan_options)
         try:
             if active_plan_options:
                 user_input = (await prompt_with_plan_selector(
@@ -228,19 +273,13 @@ async def async_main():
             console.print("[dim]Goodbye![/dim]")
             break
 
-        # Check if user input is an index number or index + args (e.g. "4", "4 Zeus")
-        parts = user_input.split(maxsplit=1)
-        if parts[0].isdigit():
-            idx = int(parts[0])
-            matched_cmd = next((c for c in session.commands if c.index == idx), None)
-            if matched_cmd:
-                extra_args = parts[1] if len(parts) > 1 else ""
-                enriched_input = (
-                    f"The user selected option {idx} ({matched_cmd.name}). "
-                    f"Additional arguments provided by user: '{extra_args}'."
-                )
-                console.print(f"[dim]Mapped choice #{idx} to {matched_cmd.name}[/dim]")
-                user_input = enriched_input
+        # Resolve numeric options (plan options take exclusive precedence when active)
+        user_input = resolve_user_input(
+            user_input=user_input,
+            plan_options=current_plan_options,
+            commands=session.commands,
+            console=console,
+        )
 
         try:
             with console.status("[bold green]Agent thinking...[/bold green]"):

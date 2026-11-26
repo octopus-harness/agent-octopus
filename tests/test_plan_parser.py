@@ -211,3 +211,88 @@ def test_extract_plan_options_wait_for_cluster_report():
     assert "(id=8, timeout_ms=600000)" in options[1].action_text
 
 
+def test_extract_plan_options_format_without_dots_or_bold():
+    text = """
+Recommended Next Steps & Actions
+
+1 Archetype Clustering: compute_clusters(target_type='God', level=5, full_coverage=false) : Group these creator archetypes into connected-component clusters for structural analysis.
+2 Freeze Cluster Snapshot: create_cluster_snapshot(target_type='God', level=6, title='Primordial Creator & Auto-genesis Archetypes') : Snapshot the creator deity cluster for reproducible scholarly tracking.
+3 Map-Reduce Synthesis Report: create_cluster_report(cluster_snapshot_id=<id>, prompt='Compare auto-genesis creation narratives and primordial sovereignty across Egyptian, Mesoamerican, and African creator traditions.') : Generate a 2-Phase cross-cultural report.
+4 Deep Synthesis Monograph: generate_deep_synthesis(report_id=<id>, batch_size=5) : Produce a 3-Phase hierarchical monograph synthesizing creator deity parallels.
+5 Retrieve Full Profiles: get_god(id=<id>, include_myth=true) : Examine myth themes for specific counterparts like Marduk, Olodumare, or Ometeotl for detailed comparative analysis.
+6 Research Persistence: $$god_save_research : Archive Atum's counterpart network and analysis notes to NoteKing for long-term reference.
+"""
+    options = extract_plan_options(text)
+    assert len(options) == 6
+    assert options[0].index == 1
+    assert options[0].title == "Archetype Clustering"
+    assert options[0].tool_name == "compute_clusters"
+    assert options[0].raw_text == "1 Archetype Clustering: compute_clusters(target_type='God', level=5, full_coverage=false) : Group these creator archetypes into connected-component clusters for structural analysis."
+    assert "(compute_clusters)" in options[0].label
+
+    assert options[1].index == 2
+    assert options[1].title == "Freeze Cluster Snapshot"
+    assert options[1].tool_name == "create_cluster_snapshot"
+
+    assert options[5].index == 6
+    assert options[5].title == "Research Persistence"
+    assert options[5].tool_name == "$$god_save_research"
+    assert "$$god_save_research" in options[5].raw_text
+
+
+def test_extract_plan_options_operational_next_steps_em_dash_multiline():
+    text = """
+Archetype Groups Discovered
+
+The snapshot maps 1,021 deities into 110 connected-component clusters. Representative groups:
+
+Cluster Group Shared Themes Size
+Cosmic Order & Sky Domain Cosmic Order, Sky, Sovereignty, Fate 3
+Creation & Benevolence Domain Creation, Benevolence, Light, Cosmic Balance 3
+
+Atum (ID 676) sits within the 1,021 deities. His vector counterparts (Ptah, Ra, Amun, Khnum, and cross-cultural creators like Ölgün and Tengri) distribute across the relevant archetype groups.
+
+Operational Next Steps
+
+1 Synthesis Report — create_cluster_report(cluster_snapshot_id=10, prompt='Analyze the cross-cultural archetype of self-created primordial creator gods and their cosmogonic roles across 110 archetype clusters.')
+  Generate a scholarly Map-Reduce report on creator deity theology across the full snapshot.
+2 Deep Synthesis Monograph — generate_deep_synthesis(report_id=<report_id>, batch_size=5)
+  Execute a 3-phase hierarchical deep synthesis after report completion.
+3 Inspect Specific Clusters — get_cluster_group(id=<group_id>, include_members=true)
+  Drill into individual cluster groups to verify deity pairings and Atum's specific neighbors.
+4 View Snapshot Details — get_cluster_snapshot(id=10, include_groups=true, include_members=true)
+  Pull the full breakdown to locate Atum's cluster and audit all member deities.
+5 Compare with Myth Clustering — create_cluster_snapshot(target_type='Myth', level=6, title='Creator Myth Narratives Snapshot')
+  Build a parallel myth-level snapshot to isolate creator narratives from deity profiles.
+6 Research Persistence — $$god_save_research
+  Archive findings on Atum's archetype clustering for future comparative mythology work.
+"""
+    options = extract_plan_options(text)
+    assert len(options) == 6
+
+    # Item 1
+    assert options[0].index == 1
+    assert options[0].title == "Synthesis Report"
+    assert options[0].tool_name == "create_cluster_report"
+
+    # Item 3: Inspect Specific Clusters
+    assert options[2].index == 3
+    assert options[2].title == "Inspect Specific Clusters"
+    assert options[2].tool_name == "get_cluster_group"
+    assert "id=<group_id>, include_members=true" in options[2].action_text
+    assert "Drill into individual cluster groups" in options[2].raw_text
+    assert options[2].raw_text.startswith("3 Inspect Specific Clusters — get_cluster_group")
+
+    # Item 4: View Snapshot Details
+    assert options[3].index == 4
+    assert options[3].title == "View Snapshot Details"
+    assert options[3].tool_name == "get_cluster_snapshot"
+
+    # Item 6: Research Persistence
+    assert options[5].index == 6
+    assert options[5].title == "Research Persistence"
+    assert options[5].tool_name == "$$god_save_research"
+
+
+
+

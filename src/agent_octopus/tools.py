@@ -46,7 +46,7 @@ def make_plan_key_bindings(options: list[PlanOption], state: dict) -> KeyBinding
         # If user hasn't typed anything and an option is active, load it into buffer for review
         if not buf.text and idx is not None and not state.get("loaded") and not state.get("dismissed"):
             chosen = options[idx]
-            buf.insert_text(chosen.action_text)
+            buf.insert_text(chosen.raw_text or chosen.action_text)
             state["loaded"] = True
             state["dismissed"] = True
             event.app.invalidate()
