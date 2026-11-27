@@ -1,6 +1,22 @@
 # 🐙 Agent Octopus
 
-> **Stop copy-pasting prompts. Build a 10x throughput personal AI operating system.**
+<p align="center">
+  <strong>Stop copy-pasting prompts. Build a 10x throughput personal AI operating system.</strong>
+</p>
+
+<p align="center">
+  <a href="https://github.com/octopus-harness/agent-octopus/releases"><img src="https://img.shields.io/badge/version-1.0.0-emerald.svg?style=flat-square" alt="Version 1.0.0" /></a>
+  <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.12%2B-3776AB.svg?style=flat-square&logo=python&logoColor=white" alt="Python 3.12+" /></a>
+  <a href="https://github.com/pydantic/pydantic-ai"><img src="https://img.shields.io/badge/Pydantic_AI-0.0.49%2B-e92063.svg?style=flat-square&logo=pydantic&logoColor=white" alt="Pydantic AI" /></a>
+  <a href="https://modelcontextprotocol.io/"><img src="https://img.shields.io/badge/MCP-1.3%2B-purple.svg?style=flat-square" alt="MCP" /></a>
+  <a href="https://github.com/octopus-harness/octo-com"><img src="https://img.shields.io/badge/Runbooks-octo--com-d946ef.svg?style=flat-square" alt="octo-com" /></a>
+  <a href="https://pydantic.dev/logfire"><img src="https://img.shields.io/badge/Observability-Logfire-FF5722.svg?style=flat-square" alt="Logfire" /></a>
+  <a href="tests/"><img src="https://img.shields.io/badge/tests-66_passed-brightgreen.svg?style=flat-square" alt="Tests" /></a>
+  <a href="https://github.com/octopus-harness/octopus"><img src="https://img.shields.io/badge/Ecosystem-Octopus_Harness-d946ef.svg?style=flat-square" alt="Octopus Harness" /></a>
+  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square" alt="License: MIT" /></a>
+</p>
+
+---
 
 Agent Octopus is a forkable, extensible multi-agent CLI framework built on **[Pydantic AI](https://github.com/pydantic/pydantic-ai)**, the **[Model Context Protocol (MCP)](https://modelcontextprotocol.io/)**, and the **`octo-com` (`com`)** command framework.
 
